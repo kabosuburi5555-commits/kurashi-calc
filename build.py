@@ -78,6 +78,7 @@ def layout(title, description, body, path, extra_head="", is_tool=False, meta=No
 <link rel="icon" href="{rel}favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="{rel}style.css">
 {jsonld}
+{CONFIG.get("head_extra", "")}
 {extra_head}
 </head>
 <body>
@@ -168,6 +169,11 @@ def main():
     # assets
     for asset in ("style.css", "favicon.svg"):
         write(asset, open(os.path.join(ROOT, asset), encoding="utf-8").read())
+    # static/ 以下はそのままサイト直下へ（Google 所有権確認ファイルなど）
+    static_dir = os.path.join(ROOT, "static")
+    if os.path.isdir(static_dir):
+        for f in os.listdir(static_dir):
+            write(f, open(os.path.join(static_dir, f), encoding="utf-8").read())
     base = CONFIG["base_url"].rstrip("/")
     today = datetime.date.today().isoformat()
     urls = [f"{base}/"] + [f"{base}/{t['slug']}/" for t in tools] + [f"{base}/{p[0]}/" for p in CONFIG["pages"]]
