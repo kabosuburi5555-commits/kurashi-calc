@@ -1,0 +1,96 @@
+<!--meta {
+"title": "冷凍肉・魚の解凍時間計算｜冷蔵庫・流水・氷水・電子レンジの解凍時間と保存期間の目安",
+"summary": "肉・魚・ご飯などの重さと解凍方法を選ぶと、解凍にかかる時間の目安と「何時に冷蔵庫へ移せばよいか」がわかります。冷蔵・冷凍の保存期間表つき。",
+"description": "冷凍した肉（鶏・豚・牛・ひき肉）や魚、ご飯・パンの解凍時間を、重さと解凍方法（冷蔵庫・流水・氷水・電子レンジ）から計算する無料ツール。夕食の時刻から逆算して冷蔵庫に移す時刻も表示。食材別の冷蔵・冷凍保存期間の目安表つき。",
+"category": "料理・キッチン",
+"order": 7,
+"faq": [
+["一番おいしく解凍できる方法はどれですか？", "冷蔵庫での低温解凍（または氷水解凍）が、ドリップ（うまみを含んだ水分）が最も出にくく、味と食感を保てます。時間がないときは流水解凍、さらに急ぐときは電子レンジの解凍モードを使います。"],
+["常温で解凍してはいけないのですか？", "室温に長時間置くと表面から先に温まり、細菌が増えやすい温度帯（10〜40℃前後）に長くさらされるためおすすめできません。特に夏場やひき肉・鶏肉は避け、冷蔵庫・流水・電子レンジのいずれかを使ってください。"],
+["解凍した肉は再冷凍できますか？", "品質と衛生面から、一度解凍した生肉・生魚の再冷凍は避けるのが基本です。加熱調理してから冷凍するのは問題ありません。どうしても余る場合は、最初から小分けにして冷凍しておくと便利です。"],
+["冷凍した肉はいつまで食べられますか？", "家庭用冷凍庫（−18℃）で、薄切り肉やひき肉は2〜3週間、かたまり肉や魚の切り身は3〜4週間が風味を保てる目安です。冷凍焼けや酸化で味が落ちるため、1か月を目安に使い切るのがおすすめです。"]
+]
+} -->
+<div class="calc" id="calc">
+  <label for="food">食材</label>
+  <select id="food">
+    <option value="thin">薄切り肉・こま切れ（厚さ1cm以下）</option>
+    <option value="mince">ひき肉</option>
+    <option value="thick" selected>厚切り肉・鶏もも/むね1枚・ステーキ（2〜3cm）</option>
+    <option value="block">かたまり肉（4cm以上）</option>
+    <option value="fish">魚の切り身</option>
+    <option value="shrimp">エビ・イカ・貝（むき身）</option>
+    <option value="rice">冷凍ご飯（1膳150g前後）</option>
+    <option value="bread">食パン・パン</option>
+  </select>
+  <div class="row">
+    <div><label for="w">重さ（g）</label><input type="number" id="w" value="300" min="20" max="5000" step="10" inputmode="numeric"></div>
+    <div><label for="method">解凍方法</label>
+      <select id="method">
+        <option value="fridge" selected>冷蔵庫（低温解凍）</option>
+        <option value="ice">氷水につける</option>
+        <option value="water">流水（水につける）</option>
+        <option value="micro">電子レンジ（解凍モード・200W）</option>
+      </select>
+    </div>
+  </div>
+  <label for="eat">使いたい時刻（逆算用・任意）</label>
+  <input type="time" id="eat" value="18:00">
+  <button type="button" onclick="calc()">解凍時間を計算する</button>
+  <div class="result" id="out" hidden></div>
+</div>
+<script>
+function calc(){
+  var food=document.getElementById('food').value,w=parseFloat(document.getElementById('w').value)||0,m=document.getElementById('method').value;
+  if(!(w>0))return;
+  var kg=w/1000;
+  // 冷蔵庫解凍の時間（h）: 基本 + 重さ比例。形状で係数を変える
+  var F={thin:[3,8],mince:[3,8],thick:[5,14],block:[8,20],fish:[3,8],shrimp:[2,6],rice:[2,4],bread:[1,2]}[food];
+  var fridge=F[0]+F[1]*kg; // h
+  var minutes,label,tip;
+  if(m==='fridge'){minutes=fridge*60;label='冷蔵庫';tip='前日の夜か当日の朝に冷蔵庫（チルド室があればチルド室）へ移すのが確実です。ドリップを受けるため皿やバットにのせてください。';}
+  else if(m==='ice'){minutes=Math.max(20,(F[0]*6+F[1]*20*kg));label='氷水';tip='密閉袋に入れ、空気を抜いて氷水に沈めます。冷蔵庫解凍に近い品質で、より短時間で解凍できます。';}
+  else if(m==='water'){minutes=Math.max(10,(F[0]*3+F[1]*10*kg));label='流水';tip='密閉袋に入れてボウルの水に沈め、細く水を流し続けます。ぬるま湯は表面が傷むので使わないでください。';}
+  else{minutes=Math.max(2,Math.round(w/100*1.5));label='電子レンジ（200W）';tip='200W前後の解凍モードで、途中で裏返しながら「まだ中心が少し凍っている」状態で止めるのがコツです。加熱しすぎると端が煮えてしまいます。';}
+  if(food==='rice'&&m==='micro'){minutes=Math.round(w/150*3);label='電子レンジ（600W・加熱）';tip='ご飯は解凍ではなく600Wで一気に加熱するとふっくら仕上がります（150gで約3分）。ラップのまま、または少し水をふって温めます。';}
+  if(food==='bread'&&m!=='micro'){minutes=Math.min(minutes,60);tip='パンは室温で30分〜1時間置くか、凍ったままトースターで焼けます。冷蔵庫はパサつくのでおすすめしません。';}
+  var h=Math.floor(minutes/60),mi=Math.round(minutes%60);
+  var tstr=(h?h+'時間':'')+(mi||!h?mi+'分':'');
+  var html='<span>'+label+'での解凍時間の目安（'+w+'g）</span><span class="big">約 '+tstr+'</span>';
+  var eat=document.getElementById('eat').value;
+  if(eat&&m!=='micro'){var p=eat.split(':');var t=new Date();t.setHours(+p[0],+p[1],0,0);var start=new Date(t.getTime()-minutes*60000);var prev=start.getDate()!==t.getDate();
+    html+='<p><strong>'+eat+' に使うなら → '+(prev?'前日の ':'')+('0'+start.getHours()).slice(-2)+':'+('0'+start.getMinutes()).slice(-2)+' までに解凍を始めてください。</strong></p>';}
+  html+='<table><tr><th>コツ</th><td>'+tip+'</td></tr>';
+  if(m!=='fridge')html+='<tr><th>参考：冷蔵庫なら</th><td>約 '+Math.round(fridge)+' 時間</td></tr>';
+  html+='</table><p class="note">解凍時間は冷凍庫の温度・肉の形状・袋の厚みで前後します。中心を押して弾力が戻り、芯がわずかに残る程度が調理しやすい状態です。</p>';
+  var o=document.getElementById('out');o.innerHTML=html;o.hidden=false;
+}
+document.querySelectorAll('#calc input,#calc select').forEach(function(el){el.addEventListener('change',calc);el.addEventListener('input',calc)});
+calc();
+</script>
+
+<h2>解凍方法の比較</h2>
+<table class="ref">
+<tr><th>方法</th><th>時間の目安（300gの場合）</th><th>仕上がり</th><th>向いている場面</th></tr>
+<tr><td>冷蔵庫（低温解凍）</td><td>8〜10時間</td><td>◎ ドリップが最も少ない</td><td>前日から準備できるとき</td></tr>
+<tr><td>氷水</td><td>1〜2時間</td><td>◎ 冷蔵庫に近い品質</td><td>当日の午後に思い出したとき</td></tr>
+<tr><td>流水</td><td>30〜60分</td><td>○ やや水っぽくなることも</td><td>調理の1時間前</td></tr>
+<tr><td>電子レンジ（解凍モード）</td><td>4〜6分</td><td>△ 端が加熱されやすい</td><td>今すぐ使いたいとき</td></tr>
+</table>
+
+<h2>食材別 冷蔵・冷凍保存期間の目安</h2>
+<table class="ref">
+<tr><th>食材</th><th>冷蔵（チルド）</th><th>冷凍（−18℃）</th></tr>
+<tr><td>ひき肉</td><td>当日〜1日</td><td>2週間</td></tr>
+<tr><td>薄切り肉・こま切れ</td><td>1〜2日</td><td>2〜3週間</td></tr>
+<tr><td>厚切り肉・鶏もも/むね</td><td>2〜3日</td><td>3〜4週間</td></tr>
+<tr><td>かたまり肉</td><td>3〜4日</td><td>1か月</td></tr>
+<tr><td>魚の切り身（生）</td><td>1〜2日</td><td>2〜3週間</td></tr>
+<tr><td>エビ・イカ（生）</td><td>当日〜1日</td><td>2〜3週間</td></tr>
+<tr><td>炊いたご飯</td><td>1日（推奨せず）</td><td>1か月</td></tr>
+<tr><td>食パン</td><td>2〜3日（常温）</td><td>2〜3週間</td></tr>
+</table>
+<p class="small">※ 購入時の鮮度と冷蔵庫の性能で変わります。消費期限の表示がある場合はそちらを優先し、においや粘りに違和感があれば食べないでください。</p>
+
+<h2>おいしく解凍するための冷凍のコツ</h2>
+<p>解凍のしやすさは、冷凍するときにほぼ決まります。肉は1回分ずつ小分けにして、できるだけ平らにのばしてラップし、さらに冷凍用の密閉袋に入れて空気を抜きます。薄く平らにしておくと、冷蔵庫でも流水でも解凍時間が半分近くに短縮できます。金属トレーにのせて急速冷凍すると氷の結晶が小さくなり、ドリップも減ります。冷凍した日付を袋に書いておくと、使い忘れを防げます。</p>

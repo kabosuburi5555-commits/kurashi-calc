@@ -1,0 +1,77 @@
+<!--meta {
+"title": "引越しダンボール枚数・トラックサイズ計算｜人数と間取りから必要な箱の数と車両の目安",
+"summary": "世帯人数・間取り・荷物の多さを選ぶだけで、引越しに必要なダンボールの枚数（大小の内訳）とトラックのサイズ、荷造りにかかる日数の目安がわかります。",
+"description": "引越しの荷造りに必要なダンボール枚数（大・小の内訳）と、荷物量に合ったトラックのサイズ（軽トラ・2t・3t・4t）、荷造りに必要な日数を、世帯人数・間取り・荷物の多さから計算する無料ツール。本や食器が多い家庭向けの調整つき。",
+"category": "DIY・住まい",
+"order": 9,
+"faq": [
+["単身の引越しでダンボールは何枚必要ですか？", "荷物が少ない単身者で10〜15枚、一般的な単身者で15〜25枚が目安です。本や服が多い場合は30枚を超えることもあります。引越し業者のプランでは10〜20枚程度が無料で付くことが多いので、足りない分を確認しておきましょう。"],
+["ダンボールの大と小はどう使い分けますか？", "小（100〜120サイズ）には本・食器・調味料など重いものを、大（140サイズ前後）には衣類・タオル・ぬいぐるみなど軽くてかさばるものを入れます。大に重いものを詰めると底が抜けたり運べなくなったりするので注意してください。"],
+["トラックのサイズはどうやって決まりますか？", "単身で荷物が少なければ軽トラック、単身〜2人なら2tショート、2〜3人なら2tロング、3〜4人家族なら3t〜4tが一般的です。大型家具・家電の数や搬入経路（道路幅・駐車スペース）でも変わるため、見積もりでは業者の判断を優先してください。"],
+["荷造りはいつから始めればいいですか？", "単身で1週間前、家族なら2〜3週間前から始めるのが目安です。使わない季節物・本・飾り物から先に詰め、日用品は前日に詰めます。1日1〜2時間・5〜8箱のペースで進めると無理がありません。"]
+]
+} -->
+<div class="calc" id="calc">
+  <div class="row">
+    <div><label for="people">世帯人数</label><select id="people"><option value="1">1人</option><option value="2" selected>2人</option><option value="3">3人</option><option value="4">4人</option><option value="5">5人以上</option></select></div>
+    <div><label for="room">間取り</label><select id="room"><option value="0.8">ワンルーム・1K</option><option value="1">1DK・1LDK</option><option value="1.2" selected>2DK・2LDK</option><option value="1.45">3DK・3LDK</option><option value="1.7">4LDK以上・一戸建て</option></select></div>
+  </div>
+  <div class="row">
+    <div><label for="vol">荷物の多さ</label><select id="vol"><option value="0.75">少ない（ミニマル）</option><option value="1" selected>ふつう</option><option value="1.3">多い</option></select></div>
+    <div><label for="extra">特に多いもの（複数選択可）</label>
+      <div class="radio" style="margin-top:8px"><label><input type="checkbox" id="books"> 本・雑誌</label><label><input type="checkbox" id="dishes"> 食器・調理器具</label><label><input type="checkbox" id="clothes"> 衣類</label></div>
+    </div>
+  </div>
+  <label for="days">1日に荷造りできる箱数</label>
+  <select id="days"><option value="4">4箱（平日夜だけ）</option><option value="7" selected>7箱（1〜2時間/日）</option><option value="12">12箱（休日にまとめて）</option></select>
+  <button type="button" onclick="calc()">必要な枚数を計算する</button>
+  <div class="result" id="out" hidden></div>
+</div>
+<script>
+function calc(){
+  var people=+document.getElementById('people').value,room=+document.getElementById('room').value,vol=+document.getElementById('vol').value;
+  var base={1:18,2:32,3:45,4:58,5:70}[people];
+  var boxes=base*room*vol;
+  var extraSmall=0,extraLarge=0;
+  if(document.getElementById('books').checked)extraSmall+=6*people;
+  if(document.getElementById('dishes').checked)extraSmall+=4+2*people;
+  if(document.getElementById('clothes').checked)extraLarge+=4*people;
+  var small=Math.round(boxes*0.55)+extraSmall,large=Math.round(boxes*0.45)+extraLarge;
+  var total=small+large;var withSpare=Math.ceil(total*1.1/5)*5;
+  var truck,note;
+  var load=total*room; // 家具・家電の量を間取りで加味した指標
+  if(people===1&&load<20){truck='軽トラック';note='大型家具がベッド・冷蔵庫程度まで。荷物が少ない単身向け。';}
+  else if(load<40){truck='2t ショート';note='単身〜2人暮らし。冷蔵庫・洗濯機・ベッド・ソファなど一式が目安。';}
+  else if(load<70){truck='2t ロング';note='2〜3人暮らしの標準的な量。';}
+  else if(load<125){truck='3t';note='3〜4人家族。大型家具が複数ある場合。';}
+  else{truck='4t 以上（または2t×2台）';note='4人以上・一戸建てなど。搬入路が狭い場合は2台に分ける提案を受けることもあります。';}
+  var perDay=+document.getElementById('days').value;var d=Math.ceil(total/perDay);
+  var html='<span>必要なダンボールの目安</span><span class="big">約 '+total+' 枚（予備込みで '+withSpare+' 枚）</span>'+
+  '<table><tr><th>小（100〜120サイズ）</th><td>約 '+small+' 枚　— 本・食器・調味料・小物など重いもの</td></tr>'+
+  '<tr><th>大（140サイズ前後）</th><td>約 '+large+' 枚　— 衣類・タオル・寝具カバー・軽い雑貨</td></tr>'+
+  '<tr><th>トラックの目安</th><td><strong>'+truck+'</strong>　'+note+'</td></tr>'+
+  '<tr><th>荷造りの日数</th><td>1日 '+perDay+' 箱なら約 <strong>'+d+' 日</strong>（'+(d>=7?'引越しの'+Math.ceil(d/7)+'週間前から':'引越しの1週間前から')+'着手が安心）</td></tr>'+
+  '<tr><th>あわせて必要なもの</th><td>ガムテープ '+Math.max(2,Math.ceil(total/15))+' 巻、緩衝材（新聞紙・エアキャップ）、油性ペン、カッター、ビニール袋</td></tr></table>'+
+  '<p class="note">業者の無料ダンボールは10〜20枚程度が一般的です。不足分は業者へ追加依頼するか、ドラッグストア・スーパーでもらう、ホームセンターや通販で購入します。</p>';
+  var o=document.getElementById('out');o.innerHTML=html;o.hidden=false;
+}
+document.getElementById('calc').addEventListener('change',calc);
+calc();
+</script>
+
+<h2>世帯人数別 ダンボール枚数とトラックの目安</h2>
+<table class="ref">
+<tr><th>世帯</th><th>間取りの例</th><th>ダンボール</th><th>トラック</th></tr>
+<tr><td>単身（荷物少なめ）</td><td>ワンルーム・1K</td><td>10〜15枚</td><td>軽トラック</td></tr>
+<tr><td>単身（標準）</td><td>1K・1DK</td><td>15〜25枚</td><td>2t ショート</td></tr>
+<tr><td>2人</td><td>1LDK・2DK</td><td>30〜45枚</td><td>2t ショート〜ロング</td></tr>
+<tr><td>3人</td><td>2LDK・3DK</td><td>45〜65枚</td><td>2t ロング〜3t</td></tr>
+<tr><td>4人</td><td>3LDK</td><td>60〜85枚</td><td>3t〜4t</td></tr>
+<tr><td>5人以上・一戸建て</td><td>4LDK〜</td><td>80〜120枚</td><td>4t〜</td></tr>
+</table>
+
+<h2>枚数を減らすコツと荷造りの順番</h2>
+<p>引越しは持ち物を見直す絶好の機会です。1年以上使っていないもの、サイズが合わない服、読み返さない本は先に手放すと、ダンボール代も運搬費も減らせます。荷造りは「使わないものから」が鉄則で、シーズンオフの衣類・本・飾り物・来客用食器から詰め始め、キッチンの日用品や洗面用具は前日にまとめます。箱には「部屋名＋中身＋割れ物」を側面にも書いておくと、新居での開梱が格段に楽になります。</p>
+
+<h2>このツールの計算方法</h2>
+<p>世帯人数ごとの標準枚数に、間取りと荷物の多さの係数を掛け、本・食器・衣類が多い場合の加算を行っています。小箱と大箱の比率は 55：45 を基準にし、本・食器は小箱、衣類は大箱に加算します。トラックは箱数と間取りから算出した荷物量の指標で判定していますが、実際には大型家具・家電の数、エレベーターの有無、道路幅で変わるため、最終的には引越し業者の訪問見積もりまたはオンライン見積もりで確認してください。</p>

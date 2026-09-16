@@ -1,0 +1,77 @@
+<!--meta {
+"title": "生後日数計算・赤ちゃんの行事日カレンダー｜お七夜・お宮参り・100日祝い（お食い初め）・ハーフバースデーの日付",
+"summary": "誕生日を入れるだけで、今日で生後何日・何か月かと、お七夜・お宮参り・お食い初め（100日祝い）・ハーフバースデー・初節句・1歳の誕生日がいつかを一覧表示します。",
+"description": "赤ちゃんの誕生日から、生後日数（今日で生後何日・生後何か月何日）と、お七夜・お宮参り・お食い初め（100日祝い・110日・120日）・ハーフバースデー・初節句・1歳の誕生日の日付を自動計算する無料ツール。各行事の数え方の違いも解説。",
+"category": "日付・時間",
+"order": 10,
+"faq": [
+["100日祝い（お食い初め）は誕生日から100日後ですか？", "「生後100日目」を祝う行事で、誕生日を1日目と数えるため、日付としては誕生日の99日後です。地域によっては110日目・120日目に行うこともあり、赤ちゃんの体調や家族の都合に合わせて前後の週末にずらしても問題ありません。"],
+["お宮参りはいつ行きますか？", "伝統的には男の子が生後31日目または32日目、女の子が生後32日目または33日目とされます（地域差あり）。現在は生後1か月健診の後、天候と母子の体調のよい日を選ぶ家庭が大半です。真夏・真冬は時期をずらすことも多いです。"],
+["初節句はいつですか？生まれてすぐの場合は？", "女の子は3月3日（桃の節句）、男の子は5月5日（端午の節句）で、生まれて最初に迎える節句が初節句です。ただし誕生から節句まで1〜2か月以内の場合は、翌年に繰り越すのが一般的です。このツールでは、節句まで21日未満のときは翌年の日付を表示しています。"],
+["生後○か月はどう数えますか？", "誕生日と同じ日付になったときに1か月とします（例：4月10日生まれなら5月10日で生後1か月）。月末生まれで同じ日付がない月は、その月の末日で数えます。予防接種や健診の「生後2か月から」などは、この数え方が基準です。"]
+]
+} -->
+<div class="calc" id="calc">
+  <div class="row">
+    <div><label for="bd">赤ちゃんの誕生日</label><input type="date" id="bd"></div>
+    <div><label for="sex">性別（お宮参り・初節句の計算用）</label><select id="sex"><option value="boy">男の子</option><option value="girl">女の子</option><option value="na" selected>指定しない</option></select></div>
+  </div>
+  <label for="asof">基準日（今日が初期値）</label>
+  <input type="date" id="asof">
+  <button type="button" onclick="calc()">日数と行事日を計算する</button>
+  <div class="result" id="out" hidden></div>
+</div>
+<script>
+var WD=['日','月','火','水','木','金','土'];
+function pad(n){return (n<10?'0':'')+n}
+function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function jp(d){return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日（'+WD[d.getDay()]+'）'}
+function parse(id){var v=document.getElementById(id).value;if(!v)return null;var p=v.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
+function addDays(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n)}
+function addMonths(d,n){var y=d.getFullYear(),m=d.getMonth()+n;var last=new Date(y,m+1,0).getDate();return new Date(y,m,Math.min(d.getDate(),last));}
+function monthsBetween(a,b){var m=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());if(addMonths(a,m)>b)m--;var rest=Math.round((b-addMonths(a,m))/86400000);return [m,rest];}
+function calc(){
+  var bd=parse('bd'),asof=parse('asof');if(!bd||!asof)return;
+  var days=Math.round((asof-bd)/86400000);
+  var o=document.getElementById('out');
+  if(days<0){o.innerHTML='<span>出産予定日まで</span><span class="big">あと '+(-days)+' 日</span><p class="note">誕生後に、あらためて行事日をご確認ください。</p>';o.hidden=false;return;}
+  var mb=monthsBetween(bd,asof);
+  var sex=document.getElementById('sex').value;
+  var ev=[];
+  ev.push(['お七夜（命名式）','生後7日目',addDays(bd,6)]);
+  var miya=sex==='girl'?31:sex==='boy'?30:30;
+  ev.push(['お宮参り','生後'+(miya+1)+'日目ごろ（'+(sex==='girl'?'女の子は32〜33日目':sex==='boy'?'男の子は31〜32日目':'男の子31日目・女の子32日目が目安')+'）',addDays(bd,miya)]);
+  ev.push(['お食い初め（100日祝い）','生後100日目',addDays(bd,99)]);
+  ev.push(['（地域により）110日目・120日目','',addDays(bd,109),addDays(bd,119)]);
+  ev.push(['ハーフバースデー','生後6か月',addMonths(bd,6)]);
+  // 初節句
+  function sekku(m,d){var s=new Date(bd.getFullYear(),m-1,d);if(s<bd)s=new Date(bd.getFullYear()+1,m-1,d);var gap=Math.round((s-bd)/86400000);var next=false;if(gap<21){s=new Date(s.getFullYear()+1,m-1,d);next=true;}return [s,next];}
+  if(sex!=='girl'){var t=sekku(5,5);ev.push(['初節句（端午の節句・男の子）',t[1]?'誕生直後のため翌年':'',t[0]]);}
+  if(sex!=='boy'){var h=sekku(3,3);ev.push(['初節句（桃の節句・女の子）',h[1]?'誕生直後のため翌年':'',h[0]]);}
+  ev.push(['1歳の誕生日（一升餅・選び取り）','',addMonths(bd,12)]);
+  var rows='';
+  ev.forEach(function(e){var dates=e.slice(2).map(function(d){var diff=Math.round((d-asof)/86400000);var tag=diff===0?'<strong>今日</strong>':diff>0?'あと'+diff+'日':'（'+(-diff)+'日前）';return jp(d)+' '+tag;}).join('<br>');rows+='<tr><th>'+e[0]+(e[1]?'<br><span class="small">'+e[1]+'</span>':'')+'</th><td>'+dates+'</td></tr>';});
+  var html='<span>'+jp(asof)+' 時点で</span><span class="big">生後 '+days+' 日（'+(days+1)+'日目）</span>'+
+  '<p><strong>生後 '+mb[0]+' か月 '+mb[1]+' 日</strong>　／　'+Math.floor(days/7)+' 週 '+(days%7)+' 日</p>'+
+  '<table>'+rows+'</table><p class="note">「生後○日目」は誕生日を1日目として数えた伝統的な数え方、「生後○日」は誕生日を0日として数えた経過日数です。健診・予防接種の「生後○か月」は、誕生日と同じ日付になった日を基準にしています。</p>';
+  o.innerHTML=html;o.hidden=false;
+}
+(function(){var t=new Date();document.getElementById('asof').value=iso(t);var b=new Date(t.getFullYear(),t.getMonth(),t.getDate()-45);document.getElementById('bd').value=iso(b);document.getElementById('calc').addEventListener('change',calc);calc();})();
+</script>
+
+<h2>赤ちゃんの行事と数え方の一覧</h2>
+<table class="ref">
+<tr><th>行事</th><th>時期</th><th>日付の数え方</th></tr>
+<tr><td>お七夜・命名式</td><td>生後7日目</td><td>誕生日の6日後</td></tr>
+<tr><td>お宮参り</td><td>生後1か月ごろ</td><td>男の子31・32日目、女の子32・33日目が伝統。現在は1か月健診後の都合のよい日</td></tr>
+<tr><td>お食い初め（100日祝い）</td><td>生後100日目</td><td>誕生日の99日後（地域により110・120日目）</td></tr>
+<tr><td>ハーフバースデー</td><td>生後6か月</td><td>誕生日の6か月後の同じ日付</td></tr>
+<tr><td>初節句</td><td>最初の3月3日／5月5日</td><td>誕生直後なら翌年に繰り越すことが多い</td></tr>
+<tr><td>初誕生（1歳）</td><td>満1歳</td><td>一升餅・選び取りなど</td></tr>
+</table>
+
+<h2>「○日目」と「○日後」を間違えないために</h2>
+<p>赤ちゃんの行事は「生後○日目」という数え方が多く、誕生日を1日目として数えます。そのため「100日目」はカレンダー上では誕生日の99日後になります。一方、母子手帳や予防接種の案内にある「生後○か月」「生後○日」は、誕生日を0として数えた経過期間です。このツールでは両方を表示しているので、行事の予定と健診・接種の予定を混同せずに確認できます。</p>
+
+<h2>行事は「目安の日」より「無理のない日」に</h2>
+<p>いずれの行事も、赤ちゃんとお母さんの体調が最優先です。100日祝いは前後2〜3週間ずらしても差し支えなく、両家の祖父母の予定に合わせて週末に行う家庭がほとんどです。お宮参りも真夏・真冬を避けて時期をずらすことが一般的になっています。写真館や料亭を予約する場合は、候補日を2〜3日決めておくと調整がスムーズです。</p>

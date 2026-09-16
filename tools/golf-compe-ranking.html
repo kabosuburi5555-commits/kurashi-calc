@@ -1,0 +1,114 @@
+<!--meta {
+"title": "ゴルフコンペ順位表メーカー｜新ペリアで全員のハンディ・ネットを一括計算して自動順位付け",
+"summary": "参加者全員のスコアをまとめて入力すると、新ペリア（ダブルペリア）・ペリア方式でハンディとネットを一括計算し、順位表を自動作成。同ネットの順位決め・上限・結果のコピーにも対応。",
+"description": "ゴルフコンペ幹事向けの無料ツール。参加者ごとにグロスと隠しホールの打数合計（または18ホールの打数）を入力すると、新ペリア・ペリア方式のハンディキャップとネットスコアを一括計算して順位表を作成します。ハンディ上限・同ネット時の順位ルール・結果テキストのコピー対応。",
+"category": "趣味・スポーツ",
+"order": 8,
+"faq": [
+["隠しホールはどう決めればいいですか？", "新ペリアではアウト6ホール・イン6ホール、合計のパーが48になるように選ぶのが一般的です（パー3を2つ、パー5を2つ、パー4を8つ）。参加者に事前に知らせず、表彰式で発表します。"],
+["同じネットスコアの人がいたら、どちらが上位ですか？", "一般的には「ハンディキャップが少ない人が上位」です。このツールでもその方式を初期設定にしています。コンペによっては年齢が上の人を上位にするなどのローカルルールがあるので、事前に決めておくと揉めません。"],
+["各ホールの打数上限（ダブルパーカット）には対応していますか？", "18ホール入力モードでは、各ホールの打数をパーの2倍（ダブルパー）で切ってから隠しホールを集計するオプションがあります。ホールごとのパーは初期値で一般的な配列を入れてありますので、コースに合わせて修正してください。"],
+["結果をLINEやメールで共有したいのですが？", "順位表の下の「結果をコピー」ボタンでテキスト形式の順位表がコピーできます。そのままLINEやメールに貼り付けられます。"]
+]
+} -->
+<div class="calc" id="calc">
+  <label>計算方式</label>
+  <div class="radio">
+    <label><input type="radio" name="mode" value="1.5" checked> 新ペリア（隠し12ホール）</label>
+    <label><input type="radio" name="mode" value="3"> ペリア（隠し6ホール）</label>
+  </div>
+  <label>入力方法</label>
+  <div class="radio">
+    <label><input type="radio" name="inmode" value="sum" checked> グロスと隠しホール合計を入力（簡単）</label>
+    <label><input type="radio" name="inmode" value="holes"> 18ホールの打数を入力（隠しホールを自動集計）</label>
+  </div>
+  <div id="holeSetup" hidden>
+    <label>隠しホールにチェック（新ペリアは12、ペリアは6）・各ホールのパー</label>
+    <div id="holes" style="display:grid;grid-template-columns:repeat(9,1fr);gap:4px;font-size:.85rem;text-align:center"></div>
+    <label class="radio" style="margin-top:8px"><input type="checkbox" id="dpc"> 各ホールをダブルパーでカットして集計</label>
+  </div>
+  <div class="row">
+    <div><label for="par">コースのパー</label><input type="number" id="par" value="72" min="54" max="80" inputmode="numeric"></div>
+    <div><label for="cap">ハンディの上限（なしは0）</label><input type="number" id="cap" value="0" min="0" step="0.1" inputmode="decimal"></div>
+  </div>
+  <div class="row">
+    <div><label for="round">ハンディの端数</label><select id="round"><option value="1" selected>小数点第1位まで</option><option value="0">四捨五入して整数</option><option value="d">切り捨てて整数</option></select></div>
+    <div><label for="tie">同ネットのとき</label><select id="tie"><option value="hc" selected>ハンディが少ない人が上位</option><option value="gross">グロスが少ない人が上位</option><option value="same">同順位にする</option></select></div>
+  </div>
+  <label>参加者（名前・グロス・隠しホール合計 ／ 18ホール入力ではカンマ区切りの打数）</label>
+  <div id="players"></div>
+  <div class="row" style="margin-top:8px">
+    <button type="button" onclick="addPlayer()" style="margin-top:0;background:var(--accent-2);color:var(--accent)">＋ 参加者を追加</button>
+    <button type="button" onclick="calc()" style="margin-top:0">順位表を作成する</button>
+  </div>
+  <div class="result" id="out" hidden></div>
+</div>
+<script>
+var PARS=[4,4,3,5,4,4,3,5,4, 4,3,5,4,4,3,4,5,4];
+var HIDDEN12=[1,2,4,6,7,9, 10,12,13,15,16,18];
+var HIDDEN6=[2,4,7,12,15,16];
+function buildHoles(){var box=document.getElementById('holes');box.innerHTML='';for(var i=1;i<=18;i++){box.innerHTML+='<div><div>'+i+'H</div><input type="checkbox" class="hh" data-h="'+i+'"'+(HIDDEN12.indexOf(i)>=0?' checked':'')+'><br><input type="number" class="hp" data-h="'+i+'" value="'+PARS[i-1]+'" min="3" max="6" style="width:100%;padding:2px;font-size:.85rem"></div>';}}
+function addPlayer(name,a,b){
+  var d=document.createElement('div');d.className='row prow';d.style.marginBottom='6px';d.style.gridTemplateColumns='1.2fr 1fr 1.6fr auto';
+  d.innerHTML='<input type="text" class="pn" placeholder="名前" value="'+(name||'')+'"><input type="number" class="pg" placeholder="グロス" inputmode="numeric" value="'+(a||'')+'"><input type="text" class="ph" placeholder="隠し合計 または 18H打数(カンマ区切り)" inputmode="numeric" value="'+(b||'')+'"><button type="button" onclick="this.parentNode.remove();calc()" style="margin:0;padding:6px 10px;background:var(--border);color:var(--text)">×</button>';
+  document.getElementById('players').appendChild(d);
+}
+function calc(){
+  var mult=parseFloat(document.querySelector('input[name=mode]:checked').value);
+  var inmode=document.querySelector('input[name=inmode]:checked').value;
+  var par=parseFloat(document.getElementById('par').value)||72,cap=parseFloat(document.getElementById('cap').value)||0;
+  var r=document.getElementById('round').value,tie=document.getElementById('tie').value;
+  var hidden=[],pars=[];document.querySelectorAll('.hh').forEach(function(c){if(c.checked)hidden.push(+c.dataset.h)});document.querySelectorAll('.hp').forEach(function(p){pars[+p.dataset.h]=+p.value||4});
+  var dpc=document.getElementById('dpc').checked;
+  var rows=[];
+  document.querySelectorAll('.prow').forEach(function(row){
+    var name=row.querySelector('.pn').value.trim()||'（名前なし）';var gross=parseFloat(row.querySelector('.pg').value);var hv=row.querySelector('.ph').value.trim();if(!hv)return;
+    var hsum;
+    if(inmode==='holes'||hv.indexOf(',')>=0||hv.indexOf('，')>=0){
+      var sc=hv.replace(/，/g,',').split(',').map(function(x){return parseFloat(x)}).filter(function(x){return !isNaN(x)});
+      if(sc.length!==18)return;
+      if(isNaN(gross))gross=sc.reduce(function(a,b){return a+b},0);
+      hsum=0;hidden.forEach(function(h){var s=sc[h-1];if(dpc)s=Math.min(s,pars[h]*2);hsum+=s;});
+    }else{hsum=parseFloat(hv);}
+    if(isNaN(gross)||isNaN(hsum))return;
+    var raw=(hsum*mult-par)*0.8;var hc=r==='1'?Math.round(raw*10)/10:r==='0'?Math.round(raw):Math.floor(raw);
+    if(cap>0&&hc>cap)hc=cap;if(hc<0)hc=0;
+    rows.push({name:name,gross:gross,hsum:hsum,hc:hc,net:Math.round((gross-hc)*10)/10});
+  });
+  var o=document.getElementById('out');
+  if(!rows.length){o.hidden=true;return;}
+  rows.sort(function(a,b){if(a.net!==b.net)return a.net-b.net;if(tie==='hc')return a.hc-b.hc;if(tie==='gross')return a.gross-b.gross;return 0;});
+  var rank=0,prev=null,text='順位  名前  グロス  HC  ネット\n';
+  var html='<span>順位表（'+(mult===1.5?'新ペリア':'ペリア')+'・'+rows.length+'名）</span><table><tr><th>順位</th><th>名前</th><th>グロス</th><th>隠し合計</th><th>HC</th><th>ネット</th></tr>';
+  rows.forEach(function(p,i){
+    var same=prev&&p.net===prev.net&&(tie==='same'||(tie==='hc'&&p.hc===prev.hc)||(tie==='gross'&&p.gross===prev.gross));
+    if(!same)rank=i+1;prev=p;
+    html+='<tr><td><strong>'+rank+'</strong></td><td>'+p.name.replace(/</g,'&lt;')+'</td><td>'+p.gross+'</td><td>'+p.hsum+'</td><td>'+p.hc+'</td><td><strong>'+p.net+'</strong></td></tr>';
+    text+=rank+'位  '+p.name+'  '+p.gross+'  '+p.hc+'  '+p.net+'\n';
+  });
+  html+='</table><button type="button" onclick="navigator.clipboard.writeText(document.getElementById(\'txt\').value).then(function(){alert(\'コピーしました\')})">結果をコピー（テキスト）</button><textarea id="txt" style="width:100%;height:90px;margin-top:8px;font-size:.85rem" readonly>'+text.replace(/</g,'&lt;')+'</textarea>';
+  var lowGross=rows.slice().sort(function(a,b){return a.gross-b.gross})[0];
+  html+='<p class="note">ベストグロス賞：'+lowGross.name.replace(/</g,'&lt;')+'（'+lowGross.gross+'）　計算式：（隠しホール合計 × '+mult+' − '+par+'）× 0.8'+(cap?'、上限 '+cap:'')+'</p>';
+  o.innerHTML=html;o.hidden=false;
+}
+buildHoles();
+addPlayer('山田',98,66);addPlayer('佐藤',88,58);addPlayer('鈴木',105,72);addPlayer('田中',95,66);
+document.querySelectorAll('input[name=inmode]').forEach(function(x){x.addEventListener('change',function(){document.getElementById('holeSetup').hidden=this.value!=='holes';calc();})});
+document.querySelectorAll('input[name=mode]').forEach(function(x){x.addEventListener('change',function(){var six=this.value==='3';document.querySelectorAll('.hh').forEach(function(c){c.checked=(six?HIDDEN6:HIDDEN12).indexOf(+c.dataset.h)>=0});calc();})});
+document.getElementById('calc').addEventListener('change',calc);
+calc();
+</script>
+
+<h2>コンペ幹事の集計手順</h2>
+<p>まず、計算方式（新ペリアかペリアか）、コースのパー、ハンディの上限、同ネット時のルールを設定します。次に参加者を追加し、スコアカードからグロスと隠しホールの打数合計を入力します。18ホールの打数をカンマ区切りで貼り付けると、隠しホールの集計とグロスの計算を自動で行うので、スコアカードを読み上げながら入力する運用がおすすめです。順位表ができたら「結果をコピー」でテキストを取り出し、LINEグループや表彰式の読み上げ原稿に使えます。</p>
+
+<h2>ハンディキャップの計算式</h2>
+<table class="ref">
+<tr><th>方式</th><th>隠しホール</th><th>計算式（パー72）</th></tr>
+<tr><td>新ペリア（ダブルペリア）</td><td>12ホール（パー合計48）</td><td>（隠しホール合計 × 1.5 − 72）× 0.8</td></tr>
+<tr><td>ペリア</td><td>6ホール（パー合計24）</td><td>（隠しホール合計 × 3 − 72）× 0.8</td></tr>
+</table>
+<p>1人ずつ計算したい場合や計算式の詳しい解説は<a href="../golf-peria/">新ペリア計算ページ</a>をご覧ください。</p>
+
+<h2>揉めないための事前ルール決め</h2>
+<p>ハンディの上限（36や40）、各ホールの打数上限（ダブルパーカットなど）、同ネットのときの順位、ベストグロス賞やニアピン・ドラコンの扱いは、スタート前に案内しておくと当日スムーズです。特に「ハンディの端数を小数第1位まで残すか、整数にするか」は順位が入れ替わる原因になるので、明文化しておくことをおすすめします。</p>

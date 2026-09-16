@@ -1,0 +1,83 @@
+<!--meta {
+"title": "調味料の分量換算｜大さじ・小さじ・カップ・mlをグラムに変換（砂糖・塩・醤油・みりん・小麦粉など）",
+"summary": "「大さじ1は何グラム？」「50gは大さじ何杯？」を調味料ごとに換算。砂糖・塩・醤油・みりん・味噌・油・小麦粉・片栗粉など25種類に対応。",
+"description": "砂糖・塩・醤油・みりん・酒・酢・味噌・油・小麦粉・片栗粉・はちみつなど調味料25種類について、大さじ・小さじ・カップ・mlとグラムを相互に換算する無料ツール。「大さじ1は何g」「30gは大さじ何杯」がすぐわかります。",
+"category": "料理・キッチン",
+"order": 6,
+"faq": [
+["大さじ1・小さじ1・1カップは何mlですか？", "日本の計量スプーンは大さじ1＝15ml、小さじ1＝5ml、計量カップ1杯＝200mlです（米用の1合カップは180mlなので注意）。"],
+["同じ大さじ1なのに調味料によってグラムが違うのはなぜですか？", "大さじは「体積」の単位で、調味料ごとに密度（比重）が違うためです。水や酒は大さじ1＝15gですが、砂糖は9g、醤油は18g、はちみつは21gになります。"],
+["砂糖大さじ1は何グラムですか？", "上白糖なら大さじ1＝約9g、小さじ1＝約3gです。グラニュー糖は大さじ1＝約12gと少し重くなります。"],
+["塩大さじ1は何グラムですか？", "精製塩（サラサラの食塩）は大さじ1＝約18g、小さじ1＝約6g。粗塩（あら塩・天然塩）は大さじ1＝約15g、小さじ1＝約5gです。"],
+["すりきりと山盛りで差はどれくらいありますか？", "レシピの分量は基本的に「すりきり」です。山盛りにすると1.3〜1.5倍になることがあり、特に塩や砂糖は味が大きく変わります。粉類はふんわり入れてからすりきってください。"]
+]
+} -->
+<div class="calc" id="calc">
+  <label for="item">調味料・食材</label>
+  <select id="item"></select>
+  <label>換算の向き</label>
+  <div class="radio">
+    <label><input type="radio" name="dir" value="v2g" checked> 大さじ・小さじ・カップ・ml → グラム</label>
+    <label><input type="radio" name="dir" value="g2v"> グラム → 大さじ・小さじ</label>
+  </div>
+  <div id="vIn">
+    <div class="row">
+      <div><label for="amt">量</label><input type="number" id="amt" value="1" min="0" step="0.5" inputmode="decimal"></div>
+      <div><label for="unit">単位</label><select id="unit"><option value="15">大さじ</option><option value="5">小さじ</option><option value="200">カップ（200ml）</option><option value="1">ml</option></select></div>
+    </div>
+  </div>
+  <div id="gIn" hidden>
+    <label for="grams">グラム</label><input type="number" id="grams" value="30" min="0" step="1" inputmode="decimal">
+  </div>
+  <button type="button" onclick="calc()">換算する</button>
+  <div class="result" id="out" hidden></div>
+</div>
+<script>
+// [名前, 大さじ1あたりのg]（小さじ＝÷3、ml＝÷15）
+var ITEMS=[["水・だし汁",15],["酒",15],["酢",15],["醤油",18],["みりん",18],["味噌",18],["砂糖（上白糖）",9],["グラニュー糖",12],["塩（精製塩・食塩）",18],["塩（粗塩・天然塩）",15],["はちみつ",21],["メープルシロップ",21],["サラダ油・オリーブ油・ごま油",12],["バター（溶かした状態）",12],["マヨネーズ",12],["ケチャップ",15],["ウスターソース・中濃ソース",18],["牛乳・生クリーム",15],["ヨーグルト",15],["小麦粉（薄力粉・強力粉）",9],["片栗粉",9],["パン粉",3],["粉チーズ",6],["いりごま・すりごま",9],["顆粒だし・コンソメ",9],["カレー粉",6],["ココア・抹茶",6],["ベーキングパウダー",12],["米（生米）",13]];
+(function(){var s=document.getElementById('item');ITEMS.forEach(function(it,i){var o=document.createElement('option');o.value=i;o.textContent=it[0]+'（大さじ1＝'+it[1]+'g）';s.appendChild(o);});s.value=3;})();
+function fmt(n){return (Math.round(n*10)/10).toString()}
+function calc(){
+  var it=ITEMS[+document.getElementById('item').value];var gPerTbsp=it[1];var gPerMl=gPerTbsp/15;
+  var dir=document.querySelector('input[name=dir]:checked').value;
+  var html;
+  if(dir==='v2g'){
+    var amt=parseFloat(document.getElementById('amt').value)||0;var unitMl=parseFloat(document.getElementById('unit').value);
+    var unitName=document.getElementById('unit').selectedOptions[0].textContent;
+    var ml=amt*unitMl;var g=ml*gPerMl;
+    html='<span>'+it[0]+'　'+unitName+' '+amt+'</span><span class="big">約 '+fmt(g)+' g</span>'+
+    '<table><tr><th>体積</th><td>'+fmt(ml)+' ml</td></tr><tr><th>大さじ換算</th><td>'+fmt(ml/15)+' 杯</td></tr><tr><th>小さじ換算</th><td>'+fmt(ml/5)+' 杯</td></tr></table>';
+  }else{
+    var g2=parseFloat(document.getElementById('grams').value)||0;var ml2=g2/gPerMl;var tb=Math.floor(ml2/15+1e-9);var restMl=ml2-tb*15;var ts=restMl/5;
+    var mix=(tb?('大さじ '+tb+' '):'')+(ts>0.05?('小さじ '+fmt(ts)):'');
+    html='<span>'+it[0]+'　'+g2+' g</span><span class="big">大さじ '+fmt(ml2/15)+' 杯</span>'+
+    '<table><tr><th>組み合わせ</th><td>'+(mix||'ごく少量')+'</td></tr><tr><th>小さじのみ</th><td>'+fmt(ml2/5)+' 杯</td></tr><tr><th>体積</th><td>'+fmt(ml2)+' ml</td></tr></table>';
+  }
+  html+='<p class="note">すりきりで量った場合の目安です。粉類はふんわり入れてすりきり、液体は表面張力で盛り上がる程度が大さじ1です。</p>';
+  var o=document.getElementById('out');o.innerHTML=html;o.hidden=false;
+}
+document.querySelectorAll('input[name=dir]').forEach(function(r){r.addEventListener('change',function(){var g=this.value==='g2v';document.getElementById('vIn').hidden=g;document.getElementById('gIn').hidden=!g;calc();})});
+document.querySelectorAll('#calc input,#calc select').forEach(function(el){el.addEventListener('change',calc);el.addEventListener('input',calc)});
+calc();
+</script>
+
+<h2>主な調味料の重さ早見表（大さじ1・小さじ1・1カップ）</h2>
+<table class="ref">
+<tr><th>調味料</th><th>小さじ1（5ml）</th><th>大さじ1（15ml）</th><th>1カップ（200ml）</th></tr>
+<tr><td>水・酒・酢</td><td>5g</td><td>15g</td><td>200g</td></tr>
+<tr><td>醤油・みりん・味噌</td><td>6g</td><td>18g</td><td>230〜240g</td></tr>
+<tr><td>砂糖（上白糖）</td><td>3g</td><td>9g</td><td>130g</td></tr>
+<tr><td>塩（精製塩）</td><td>6g</td><td>18g</td><td>240g</td></tr>
+<tr><td>塩（粗塩）</td><td>5g</td><td>15g</td><td>180g</td></tr>
+<tr><td>はちみつ</td><td>7g</td><td>21g</td><td>280g</td></tr>
+<tr><td>油・バター・マヨネーズ</td><td>4g</td><td>12g</td><td>180g</td></tr>
+<tr><td>小麦粉・片栗粉</td><td>3g</td><td>9g</td><td>110〜130g</td></tr>
+<tr><td>パン粉</td><td>1g</td><td>3g</td><td>40g</td></tr>
+</table>
+<p class="small">※ 一般的な調理の目安値です。同じ調味料でも銘柄や粒の大きさ、湿り気で1〜2割変わることがあります。</p>
+
+<h2>正しい計量のしかた</h2>
+<p>液体は、大さじの縁ぎりぎりまで入れて表面が少し盛り上がる状態が「1杯」です。粉類や砂糖・塩は、スプーンで山盛りにすくってから、別のスプーンの柄などで平らにすりきります。押し固めると1.2倍以上入ってしまうので、ふんわり入れるのがコツです。味噌やバターなど固形のものは、隙間ができないように詰めてからすりきります。</p>
+
+<h2>「1カップ」の落とし穴</h2>
+<p>料理用の計量カップは200mlですが、炊飯器に付属している米用カップは1合＝180mlです。また海外レシピの1 cupは約240ml（米国）と大きく、大さじも海外では15mlではなく14.8mlや20ml（オーストラリア）の場合があります。海外レシピを使うときは単位の前提を確認しましょう。</p>
