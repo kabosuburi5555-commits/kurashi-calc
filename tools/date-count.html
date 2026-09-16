@@ -1,0 +1,93 @@
+<!--meta {
+"title": "日数計算・あと何日カウントダウン｜2つの日付の間の日数と○日後の日付を計算",
+"summary": "記念日・締切・イベントまであと何日？2つの日付の間の日数（週・月換算つき）と、今日から○日後・○日前の日付を計算します。",
+"description": "2つの日付の間の日数を計算（週・月・年換算、曜日つき）し、記念日や締切までのカウントダウン、今日から○日後・○日前の日付を求める無料の日数計算ツール。初日を含める/含めないにも対応。",
+"category": "日付・時間",
+"order": 5,
+"faq": [
+["「初日を含める」とはどういう意味ですか？", "たとえば4月1日から4月10日までは、差し引きでは9日ですが、両端を数えると10日間です。イベントの開催日数や入院日数など『何日間か』を数えるときは初日を含め、『あと何日か』を数えるときは含めないのが一般的です。"],
+["○日後の日付はどう数えますか？", "このツールの『○日後』は当日を0日目として数えます。たとえば9月1日の3日後は9月4日です。支払期限などで『翌日から起算』と決まっている場合は同じ数え方になります。"],
+["月数や年数の換算はどう計算していますか？", "年月換算は暦どおりに計算し、たとえば1月31日から3月1日は「1か月と1日」のように、月をまたいだ端数を日数で表示します。週換算は日数を7で割った商と余りです。"],
+["うるう年は考慮されていますか？", "はい。カレンダー計算はブラウザの日付機能を使っており、うるう年（2月29日）も正しく反映されます。"]
+]
+} -->
+<div class="calc" id="calc">
+  <h3>① 2つの日付の間の日数・あと何日</h3>
+  <div class="row">
+    <div><label for="d1">開始日（今日が初期値）</label><input type="date" id="d1"></div>
+    <div><label for="d2">終了日・目標日</label><input type="date" id="d2"></div>
+  </div>
+  <label class="radio"><input type="checkbox" id="inc"> 初日を含めて数える（「○日間」の数え方）</label>
+  <button type="button" onclick="calc1()">日数を計算する</button>
+  <div class="result" id="out1" hidden></div>
+</div>
+<div class="calc" id="calc2">
+  <h3>② ○日後・○日前の日付</h3>
+  <div class="row">
+    <div><label for="base">基準日</label><input type="date" id="base"></div>
+    <div><label for="n">日数</label><input type="number" id="n" value="100" min="0" max="36500" inputmode="numeric"></div>
+  </div>
+  <div class="radio">
+    <label><input type="radio" name="dir" value="1" checked> ○日後</label>
+    <label><input type="radio" name="dir" value="-1"> ○日前</label>
+  </div>
+  <button type="button" onclick="calc2()">日付を計算する</button>
+  <div class="result" id="out2" hidden></div>
+</div>
+<script>
+var WD=['日','月','火','水','木','金','土'];
+function pad(n){return (n<10?'0':'')+n}
+function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function jp(d){return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日（'+WD[d.getDay()]+'）'}
+function parse(id){var v=document.getElementById(id).value;if(!v)return null;var p=v.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
+function diffYMD(a,b){ // a<=b
+  var y=b.getFullYear()-a.getFullYear(),m=b.getMonth()-a.getMonth(),d=b.getDate()-a.getDate();
+  if(d<0){m--;var pm=new Date(b.getFullYear(),b.getMonth(),0);d+=pm.getDate();}
+  if(m<0){y--;m+=12;}
+  return [y,m,d];
+}
+function calc1(){
+  var a=parse('d1'),b=parse('d2');if(!a||!b){return;}
+  var sign=1;if(b<a){var t=a;a=b;b=t;sign=-1;}
+  var days=Math.round((b-a)/86400000);
+  var inc=document.getElementById('inc').checked;
+  var shown=days+(inc?1:0);
+  var ymd=diffYMD(a,b);
+  var today=new Date();today.setHours(0,0,0,0);
+  var label=sign<0?'終了日が開始日より前です（日付を入れ替えて計算）':(inc?'期間の日数':'日数の差');
+  var html='<span>'+label+'</span><span class="big">'+shown+' 日'+(inc?'間':'')+'</span>'+
+  '<table><tr><th>期間</th><td>'+jp(a)+' → '+jp(b)+'</td></tr>'+
+  '<tr><th>週に換算</th><td>'+Math.floor(shown/7)+'週'+(shown%7?'と'+shown%7+'日':'')+'</td></tr>'+
+  '<tr><th>年月に換算</th><td>'+(ymd[0]?ymd[0]+'年':'')+(ymd[1]?ymd[1]+'か月':'')+(ymd[2]||(!ymd[0]&&!ymd[1])?ymd[2]+'日':'')+'</td></tr>'+
+  '<tr><th>時間に換算</th><td>'+(shown*24).toLocaleString()+'時間</td></tr></table>';
+  if(iso(a)===iso(today)&&days>0){
+    html+='<p><strong>'+jp(b)+'まで、あと '+days+' 日</strong>です。</p>';
+  }
+  var o=document.getElementById('out1');o.innerHTML=html;o.hidden=false;
+}
+function calc2(){
+  var base=parse('base');var n=parseInt(document.getElementById('n').value)||0;if(!base)return;
+  var dir=parseInt(document.querySelector('input[name=dir]:checked').value);
+  var r=new Date(base.getFullYear(),base.getMonth(),base.getDate()+dir*n);
+  var html='<span>'+jp(base)+'の '+n+' 日'+(dir>0?'後':'前')+'</span><span class="big">'+jp(r)+'</span>'+
+  '<p class="note">基準日を0日目として数えています（翌日が1日後）。</p>';
+  var o=document.getElementById('out2');o.innerHTML=html;o.hidden=false;
+}
+(function(){
+  var t=new Date();var s=iso(t);
+  document.getElementById('d1').value=s;document.getElementById('base').value=s;
+  var ny=new Date(t.getFullYear()+1,0,1);document.getElementById('d2').value=iso(ny);
+  document.querySelectorAll('#calc input').forEach(function(el){el.addEventListener('change',calc1)});
+  document.querySelectorAll('#calc2 input').forEach(function(el){el.addEventListener('change',calc2)});
+  calc1();calc2();
+})();
+</script>
+
+<h2>日数計算でよくある「1日のずれ」を防ぐ</h2>
+<p>日数計算で混乱しやすいのが「初日を含めるかどうか」です。4月1日から4月10日までを「差」で数えると9日、両端を含めて「期間」として数えると10日間になります。カウントダウン（あと何日）や年齢・経過日数は差で数え、イベントの開催日数・宿泊日数・入院日数などは初日を含めて数えるのが一般的です。契約や法律上の期間計算では「初日不算入」が原則とされる場面も多いので、正式な書類では規定を確認してください。</p>
+
+<h2>○日後の日付の数え方</h2>
+<p>「○日後」は基準日を0日目として数えます。9月1日の3日後は9月4日、100日後は12月10日です。支払期限が「請求日から30日以内」といった場合も、請求日の翌日を1日目として数えるのが一般的で、このツールの計算と一致します。うるう年（2月29日）や月末日をまたぐ場合も自動で正しく計算されます。</p>
+
+<h2>活用例</h2>
+<p>結婚記念日や付き合った日からの経過日数、赤ちゃんの生後日数（100日祝いの日付）、資格試験や納期までの残り日数、旅行の日数、仕事の営業日を数える前の総日数の確認などに使えます。年月の換算も表示されるので、「1000日は約2年8か月」のような感覚的な把握にも便利です。</p>

@@ -1,0 +1,75 @@
+<!--meta {
+"title": "犬・猫の年齢を人間に換算｜何歳相当かを体格別に自動計算",
+"summary": "犬（小型・中型・大型）や猫の年齢（歳と月）を入れると、人間でいうと何歳相当かを計算します。ライフステージの目安つき。",
+"description": "犬（小型犬・中型犬・大型犬）と猫の年齢を人間の年齢に換算する無料ツール。歳と月で入力でき、成長期・成犬期・シニア期などライフステージの目安も表示します。",
+"category": "ペット・動物",
+"order": 4,
+"faq": [
+["犬の1歳は人間の何歳ですか？", "小型犬・中型犬の1歳は人間の約15歳、2歳で約24歳、その後は1年ごとに約4歳ずつ年をとると考えるのが一般的です。大型犬は成長は早いものの老化も早く、2歳以降は1年で約7歳ずつ年をとる計算をします。"],
+["猫の1歳は人間の何歳ですか？", "猫は1歳で人間の約15歳、2歳で約24歳、その後は1年ごとに約4歳ずつ年をとるとされています。室内飼いの猫は15〜20年生きることも珍しくなく、20歳の猫は人間の96歳相当になります。"],
+["犬はいつからシニアですか？", "小型・中型犬は7歳前後、大型犬は5〜6歳頃からシニア期に入るといわれます。人間換算でおおむね45〜50歳以降にあたります。年に1〜2回の健康診断や食事の見直しを検討する時期です。"],
+["この換算は正確ですか？", "犬種や個体差、飼育環境で老化のスピードは大きく変わるため、あくまで目安です。健康状態については獣医師に相談してください。"]
+]
+} -->
+<div class="calc" id="calc">
+  <label>動物の種類</label>
+  <div class="radio">
+    <label><input type="radio" name="kind" value="small" checked> 小型犬（〜10kg）</label>
+    <label><input type="radio" name="kind" value="medium"> 中型犬（10〜25kg）</label>
+    <label><input type="radio" name="kind" value="large"> 大型犬（25kg〜）</label>
+    <label><input type="radio" name="kind" value="cat"> 猫</label>
+  </div>
+  <div class="row">
+    <div><label for="y">年齢（歳）</label><input type="number" id="y" value="3" min="0" max="30" inputmode="numeric"></div>
+    <div><label for="m">＋ 月</label><input type="number" id="m" value="0" min="0" max="11" inputmode="numeric"></div>
+  </div>
+  <button type="button" onclick="calc()">人間の年齢に換算する</button>
+  <div class="result" id="out" hidden></div>
+</div>
+<script>
+function human(kind,age){
+  // 1歳=15, 2歳=24, 以降 小型・中型・猫 +4/年, 大型 +7/年（1歳未満・1〜2歳は線形補間）
+  var step={small:4,medium:4,large:7,cat:4}[kind];
+  if(age<=1)return 15*age;
+  if(age<=2)return 15+9*(age-1);
+  return 24+step*(age-2);
+}
+function stage(kind,age){
+  var senior={small:7,medium:7,large:6,cat:7}[kind];
+  if(age<1)return '成長期（子犬・子猫）';
+  if(age<senior)return '成犬・成猫期';
+  if(age<senior+4)return 'シニア期（健康診断は年1〜2回が目安）';
+  return '高齢期（体調の変化に注意）';
+}
+function calc(){
+  var kind=document.querySelector('input[name=kind]:checked').value;
+  var y=parseInt(document.getElementById('y').value)||0,m=parseInt(document.getElementById('m').value)||0;
+  var age=y+m/12;
+  var names={small:'小型犬',medium:'中型犬',large:'大型犬',cat:'猫'};
+  var h=human(kind,age);
+  var rows='';
+  var marks=[1,2,3,5,7,10,12,15];
+  marks.forEach(function(a){rows+='<tr><th>'+a+'歳</th><td>約'+Math.round(human(kind,a))+'歳</td></tr>';});
+  var html='<span>'+names[kind]+' '+y+'歳'+(m?m+'か月':'')+'は、人間でいうと</span><span class="big">約 '+Math.round(h)+' 歳</span>'+
+  '<p><strong>ライフステージ：</strong>'+stage(kind,age)+'</p>'+
+  '<details><summary>'+names[kind]+'の年齢早見表</summary><table>'+rows+'</table></details>';
+  var out=document.getElementById('out');out.innerHTML=html;out.hidden=false;
+}
+document.querySelectorAll('#calc input').forEach(function(el){el.addEventListener('change',calc)});
+calc();
+</script>
+
+<h2>犬・猫の年齢換算の考え方</h2>
+<p>「犬の1年は人間の7年」という言い方をよく聞きますが、実際には最初の1〜2年で急速に成長し、その後はゆっくり年をとります。現在広く使われている換算では、1歳で人間の約15歳、2歳で約24歳、3歳以降は1年ごとに小型・中型犬と猫は約4歳、大型犬は約7歳ずつ加算します。大型犬は体が大きいぶん成長に時間がかかる一方で老化が早く、寿命も小型犬より短い傾向があります。</p>
+<table class="ref">
+<tr><th>実年齢</th><th>小型・中型犬</th><th>大型犬</th><th>猫</th></tr>
+<tr><td>1歳</td><td>15歳</td><td>15歳</td><td>15歳</td></tr>
+<tr><td>2歳</td><td>24歳</td><td>24歳</td><td>24歳</td></tr>
+<tr><td>5歳</td><td>36歳</td><td>45歳</td><td>36歳</td></tr>
+<tr><td>7歳</td><td>44歳</td><td>59歳</td><td>44歳</td></tr>
+<tr><td>10歳</td><td>56歳</td><td>80歳</td><td>56歳</td></tr>
+<tr><td>15歳</td><td>76歳</td><td>115歳</td><td>76歳</td></tr>
+</table>
+
+<h2>ライフステージごとのケアの目安</h2>
+<p>成長期（1歳未満）はワクチンや食事量の調整、社会化が大切な時期です。成犬・成猫期は体重管理と歯のケアを習慣に。小型・中型犬と猫は7歳前後、大型犬は5〜6歳頃からシニア期に入るとされ、フードのシニア用への切り替えや年1〜2回の健康診断を検討する時期になります。個体差が大きいため、気になる変化があれば早めに獣医師へ相談してください。</p>

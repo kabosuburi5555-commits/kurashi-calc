@@ -1,0 +1,88 @@
+<!--meta {
+"title": "炊飯の水加減計算｜白米・無洗米・玄米の水の量を合数から自動計算",
+"summary": "合数と米の種類（白米・無洗米・玄米・新米）を選ぶだけで、ちょうどよい水の量（ml・カップ）がわかります。鍋炊き・かため/やわらかめにも対応。",
+"description": "お米の合数と種類を入力すると、炊飯に必要な水の量をml・計量カップで計算します。無洗米・玄米・新米・鍋炊き・浸水あり/なし・かため/やわらかめの好みに対応した無料ツールです。",
+"category": "料理・キッチン",
+"order": 1,
+"faq": [
+["1合は何mlですか？何グラムですか？", "1合は容積で約180ml、重さにすると白米で約150gです。炊きあがりは約330g（茶碗2杯分）になります。"],
+["無洗米はなぜ水を多めにするのですか？", "無洗米は表面のぬかが取り除かれているぶん、同じ1合カップでも米粒が多く入ります。そのため通常の白米より1合あたり10〜15ml程度多めの水にすると同じ食感になります。"],
+["炊飯器の目盛りとこの計算が合わないのですが？", "炊飯器の内釜の目盛りは、メーカーがその機種の加熱特性に合わせて調整しているため、目安の計算値と多少ずれることがあります。炊飯器で炊く場合は内釜の目盛りを優先し、鍋炊きや目盛りのない容器で炊くときにこの計算をお使いください。"],
+["水は浸水させてから量るのですか？", "このツールの計算は「洗ってすぐ水を合わせ、そのまま30分〜1時間浸水させて炊く」前提です。すでに30分以上浸水させてざるに上げた米は水を吸っているので、『浸水済みの米』を選ぶと水を米と同量に減らして計算します。"]
+]
+} -->
+<div class="calc" id="calc">
+  <label for="go">お米の量（合）</label>
+  <input type="number" id="go" value="2" min="0.5" max="20" step="0.5" inputmode="decimal">
+  <label>お米の種類</label>
+  <div class="radio">
+    <label><input type="radio" name="kind" value="white" checked> 白米</label>
+    <label><input type="radio" name="kind" value="musen"> 無洗米</label>
+    <label><input type="radio" name="kind" value="shinmai"> 新米（白米）</label>
+    <label><input type="radio" name="kind" value="genmai"> 玄米</label>
+    <label><input type="radio" name="kind" value="soaked"> 浸水済みの米（ざる上げ後）</label>
+  </div>
+  <div class="row">
+    <div>
+      <label for="taste">好みのかたさ</label>
+      <select id="taste">
+        <option value="-0.05">かため</option>
+        <option value="0" selected>ふつう</option>
+        <option value="0.05">やわらかめ</option>
+      </select>
+    </div>
+    <div>
+      <label for="pot">炊き方</label>
+      <select id="pot">
+        <option value="0" selected>炊飯器（目安確認用）</option>
+        <option value="0.1">鍋・土鍋（蒸発が多いので+10%）</option>
+      </select>
+    </div>
+  </div>
+  <button type="button" onclick="calc()">水の量を計算する</button>
+  <div class="result" id="out" hidden></div>
+</div>
+<script>
+function calc(){
+  var go=parseFloat(document.getElementById('go').value);
+  if(!(go>0)){alert('合数を入力してください');return;}
+  var kind=document.querySelector('input[name=kind]:checked').value;
+  var taste=parseFloat(document.getElementById('taste').value);
+  var pot=parseFloat(document.getElementById('pot').value);
+  var perGo={white:1.2,musen:1.28,shinmai:1.14,genmai:1.6,soaked:1.0}[kind];
+  var riceMl=go*180;
+  var water=riceMl*perGo*(1+taste)*(1+pot);
+  var riceG=Math.round(go*(kind==='genmai'?156:150));
+  var cooked=Math.round(go*(kind==='genmai'?300:330));
+  var cups=(water/200);
+  var w=Math.round(water/5)*5;
+  var names={white:'白米',musen:'無洗米',shinmai:'新米',genmai:'玄米',soaked:'浸水済みの米'};
+  var html='<span>'+go+'合（'+names[kind]+'）に対する水の量</span><span class="big">約 '+w+' ml</span>'+
+  '<table><tr><th>計量カップ（200ml）</th><td>約 '+cups.toFixed(1)+' 杯</td></tr>'+
+  '<tr><th>お米の重さ</th><td>約 '+riceG+' g</td></tr>'+
+  '<tr><th>炊きあがりの量</th><td>約 '+cooked+' g（茶碗約'+Math.round(cooked/150)+'杯分）</td></tr>'+
+  '<tr><th>おすすめの浸水時間</th><td>'+(kind==='genmai'?'6時間以上（できれば一晩）':kind==='soaked'?'不要（すでに浸水済み）':'夏30分・冬1時間')+'</td></tr></table>'+
+  '<p class="note">炊飯器で炊く場合は内釜の目盛りを優先してください。水は「米を洗い終わって釜に入れた後」に加える量です。</p>';
+  var out=document.getElementById('out');out.innerHTML=html;out.hidden=false;
+}
+document.querySelectorAll('#calc input,#calc select').forEach(function(el){el.addEventListener('change',calc)});
+calc();
+</script>
+
+<h2>水加減の基本｜米1合に対する水の量</h2>
+<p>炊飯の水加減は「米の容積の1.2倍」が基本です。米1合＝180mlなので、白米1合あたりの水は約216ml（重さで量るなら米150gに対して水220g前後）になります。この基準をもとに、米の種類や炊き方で次のように調整します。</p>
+<table class="ref">
+<tr><th>米の種類・状態</th><th>水の倍率（容積比）</th><th>1合あたりの水</th></tr>
+<tr><td>白米（通常）</td><td>1.2倍</td><td>約215ml</td></tr>
+<tr><td>無洗米</td><td>約1.28倍</td><td>約230ml</td></tr>
+<tr><td>新米</td><td>約1.14倍（1割減）</td><td>約205ml</td></tr>
+<tr><td>玄米</td><td>1.5〜1.7倍</td><td>約290ml</td></tr>
+<tr><td>浸水してざるに上げた米</td><td>1.0倍（米と同量）</td><td>約180ml</td></tr>
+</table>
+<p>好みに応じて、かためなら5%ほど減らし、やわらかめなら5%ほど増やします。鍋や土鍋で炊く場合は炊飯器より蒸発量が多いため、1割ほど多めにするとちょうどよく仕上がります。</p>
+
+<h2>失敗しないためのポイント</h2>
+<p>まず、米の計量は「すりきり」で正確に。計量カップの山盛り・すりきりの差だけで水加減が1割近くずれます。次に、洗米後はしっかり浸水させること。浸水が足りないと芯が残り、水を増やしても解決しません。玄米は吸水に時間がかかるため6時間以上、可能なら一晩浸けてから炊きます。最後に、炊きあがったら10分ほど蒸らし、底から返すようにほぐすと余分な水分が飛んでふっくらします。</p>
+
+<h2>このツールの計算方法</h2>
+<p>水の量 ＝ 合数 × 180ml × 米の種類ごとの倍率 × （1 ± かたさ調整5%） × （鍋炊きなら1.1）。結果は5ml単位に丸めています。炊飯器の目盛りはメーカーごとに調整されているため、炊飯器で炊く場合は内釜の目盛りを優先し、本ツールは鍋炊き・目盛りのない容器・重さで計量したいときの目安としてご利用ください。</p>

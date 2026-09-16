@@ -1,0 +1,70 @@
+<!--meta {
+"title": "新ペリア（ダブルペリア）計算｜ゴルフコンペのハンディキャップとネットスコアを自動計算",
+"summary": "グロススコアと隠しホールの合計打数を入れるだけで、新ペリア・ペリア方式のハンディキャップとネットスコアを計算。上限設定にも対応。",
+"description": "ゴルフコンペで使う新ペリア（ダブルペリア）方式・ペリア方式のハンディキャップとネットスコアを自動計算する無料ツール。グロススコアと隠しホールの合計打数を入力するだけ。ハンディ上限・コースのパーも設定できます。",
+"category": "趣味・スポーツ",
+"order": 3,
+"faq": [
+["新ペリアとペリアの違いは何ですか？", "ペリア方式は隠しホールが6ホール（パー合計36）、新ペリア（ダブルペリア）方式は隠しホールが12ホール（パー合計48）です。隠しホールが多いぶん、新ペリアのほうが偶然の影響が小さく、実力に近いハンディが出やすいとされています。"],
+["新ペリアの計算式を教えてください。", "ハンディキャップ ＝（隠しホール12ホールの打数合計 × 1.5 − コースのパー）× 0.8 です。隠しホール12ホールを1.5倍すると18ホール分の推定打数になり、そこからパー（通常72）を引いた「オーバー分」の8割をハンディとします。"],
+["ハンディキャップの上限とは何ですか？", "コンペによっては極端に大きなハンディが出ないよう、上限（例：36や40）を設けています。また各ホールの打数に上限（例：パーの2倍まで、ダブルパーカット）を設ける場合もあります。幹事の設定に従ってください。"],
+["ネットスコアが同じ場合の順位はどう決めますか？", "一般的には「ハンディの少ない人が上位」、それでも同じなら「年齢の高い人が上位」など、コンペごとのローカルルールで決めます。事前にルールを確認しておきましょう。"]
+]
+} -->
+<div class="calc" id="calc">
+  <label>計算方式</label>
+  <div class="radio">
+    <label><input type="radio" name="mode" value="1.5" checked> 新ペリア（ダブルペリア・隠し12ホール）</label>
+    <label><input type="radio" name="mode" value="3"> ペリア（隠し6ホール）</label>
+  </div>
+  <div class="row">
+    <div><label for="gross">グロススコア（18ホール合計）</label><input type="number" id="gross" value="98" min="30" max="200" inputmode="numeric"></div>
+    <div><label for="hidden">隠しホールの打数合計</label><input type="number" id="hidden" value="66" min="10" max="150" inputmode="numeric"></div>
+  </div>
+  <div class="row">
+    <div><label for="par">コースのパー</label><input type="number" id="par" value="72" min="54" max="80" inputmode="numeric"></div>
+    <div><label for="cap">ハンディの上限（なしは0）</label><input type="number" id="cap" value="0" min="0" step="0.1" inputmode="decimal"></div>
+  </div>
+  <label for="round">ハンディの端数処理</label>
+  <select id="round"><option value="1" selected>小数点第1位まで（一般的）</option><option value="0">四捨五入して整数</option><option value="d">切り捨てて整数</option></select>
+  <button type="button" onclick="calc()">ハンディとネットを計算する</button>
+  <div class="result" id="out" hidden></div>
+</div>
+<script>
+function v(id){return parseFloat(document.getElementById(id).value)||0}
+function calc(){
+  var mult=parseFloat(document.querySelector('input[name=mode]:checked').value);
+  var gross=v('gross'),hidden=v('hidden'),par=v('par'),cap=v('cap');
+  if(!(gross>0&&hidden>0&&par>0)){alert('スコアを入力してください');return;}
+  if(hidden>gross){alert('隠しホールの合計がグロススコアを超えています');return;}
+  var raw=(hidden*mult-par)*0.8;
+  var r=document.getElementById('round').value;
+  var hc=r==='1'?Math.round(raw*10)/10:r==='0'?Math.round(raw):Math.floor(raw);
+  var capped=false;
+  if(cap>0&&hc>cap){hc=cap;capped=true;}
+  if(hc<0)hc=0;
+  var net=Math.round((gross-hc)*10)/10;
+  var html='<span>ネットスコア</span><span class="big">'+net+'</span>'+
+  '<table><tr><th>ハンディキャップ</th><td><strong>'+hc+'</strong>'+(capped?'（上限'+cap+'を適用）':'')+'</td></tr>'+
+  '<tr><th>計算式</th><td>（'+hidden+' × '+mult+' − '+par+'）× 0.8 ＝ '+(Math.round(raw*100)/100)+'</td></tr>'+
+  '<tr><th>グロス</th><td>'+gross+'（パー'+par+'に対して +'+(gross-par)+'）</td></tr>'+
+  '<tr><th>ネット</th><td>'+gross+' − '+hc+' ＝ '+net+'</td></tr></table>';
+  var out=document.getElementById('out');out.innerHTML=html;out.hidden=false;
+}
+document.querySelectorAll('#calc input,#calc select').forEach(function(el){el.addEventListener('change',calc)});
+calc();
+</script>
+
+<h2>新ペリア方式とは</h2>
+<p>新ペリア（ダブルペリア）方式は、ゴルフコンペでハンディキャップを持たない人同士が公平に競えるように考えられた計算方法です。プレー前には知らされない「隠しホール」を12ホール（アウト6・イン6、パーの合計が48になるように選定）決めておき、その12ホールの打数合計からハンディキャップを算出します。プレー後に発表されるため、狙ってスコアを調整できないのが特徴です。</p>
+<table class="ref">
+<tr><th>方式</th><th>隠しホール</th><th>計算式（パー72の場合）</th></tr>
+<tr><td>新ペリア（ダブルペリア）</td><td>12ホール（パー合計48）</td><td>（隠しホールの打数合計 × 1.5 − 72）× 0.8</td></tr>
+<tr><td>ペリア</td><td>6ホール（パー合計36）</td><td>（隠しホールの打数合計 × 3 − 72）× 0.8</td></tr>
+</table>
+
+<h2>計算例</h2>
+<p>グロス98、隠しホール12ホールの合計が66打だった場合、66 × 1.5 ＝ 99 が18ホール分の推定打数です。ここからパー72を引いた27が「オーバー分」で、その8割の21.6がハンディキャップになります。ネットスコアは 98 − 21.6 ＝ 76.4 です。隠しホールで大叩きした人ほどハンディが大きくなるため、初心者でも上位に入るチャンスがあります。</p>
+
+<h2>コンペでよく使われる追加ルール</h2>
+<p>幹事の設定によって、ハンディキャップの上限（36や40など）や、各ホールの打数上限（パーの2倍まで＝ダブルパーカット、あるいはパー＋○打まで）が設けられることがあります。打数上限がある場合は、隠しホールの各打数を上限で切ってから合計してください。同ネットの場合の順位は「ハンディの少ない人が上位」が一般的ですが、コンペごとに異なるので事前に確認しておくと安心です。</p>

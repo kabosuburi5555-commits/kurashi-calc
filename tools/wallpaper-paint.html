@@ -1,0 +1,92 @@
+<!--meta {
+"title": "壁紙・ペンキ必要量計算｜部屋のサイズから壁紙のm数とペンキのL数を自動計算",
+"summary": "部屋の縦・横・高さと窓・ドアの数を入れるだけで、DIYに必要な壁紙の長さ（m）とペンキの量（L）がわかります。天井・二度塗り・ロス分にも対応。",
+"description": "部屋の寸法と開口部を入力すると、DIYに必要な壁紙の長さ（幅92cm基準）とペンキの量（塗り面積・塗り回数・1Lあたりの塗布面積から計算）を自動で算出する無料ツール。ロス分・天井の有無も設定できます。",
+"category": "DIY・住まい",
+"order": 2,
+"faq": [
+["壁紙は何%くらい多めに買えばいいですか？", "無地なら10%、柄合わせが必要な柄物なら15〜20%多めが目安です。切りしろ・柄合わせ・失敗のやり直しに使います。足りなくなると同じロット（色味）の壁紙が手に入らないことがあるため、少し多めに買うのが安全です。"],
+["6畳の部屋の壁紙は何m必要ですか？", "一般的な6畳（約2.6m×3.5m、天井高2.4m）で壁だけなら、幅92cmの壁紙で約35〜40mが目安です。窓やドアが多いと少し減りますが、柄合わせがあると増えます。"],
+["ペンキ1Lで何m²塗れますか？", "水性の室内用ペンキで1回塗りあたり6〜10m²/Lが一般的です。缶に「塗り面積（○m²/L）」が表示されているので、その数値を入力すると正確になります。通常は二度塗りするため、実際の必要量は表示の半分の面積になります。"],
+["天井の面積はどう計算しますか？", "天井の面積＝部屋の縦×横です。天井も貼る・塗る場合は『天井も含める』にチェックを入れると壁の面積に加算されます。"]
+]
+} -->
+<div class="calc" id="calc">
+  <div class="row">
+    <div><label for="w">部屋の横幅（m）</label><input type="number" id="w" value="3.5" step="0.1" min="0.5" inputmode="decimal"></div>
+    <div><label for="d">部屋の奥行き（m）</label><input type="number" id="d" value="2.6" step="0.1" min="0.5" inputmode="decimal"></div>
+  </div>
+  <div class="row">
+    <div><label for="h">天井の高さ（m）</label><input type="number" id="h" value="2.4" step="0.05" min="1" inputmode="decimal"></div>
+    <div><label for="ceil">天井も含める</label><select id="ceil"><option value="0" selected>含めない（壁のみ）</option><option value="1">含める</option></select></div>
+  </div>
+  <div class="row">
+    <div><label for="doors">ドアの数（約1.8m²/枚）</label><input type="number" id="doors" value="1" min="0" step="1" inputmode="numeric"></div>
+    <div><label for="wins">窓の数（約1.5m²/枚）</label><input type="number" id="wins" value="1" min="0" step="1" inputmode="numeric"></div>
+  </div>
+  <h3 style="margin-top:18px">壁紙の設定</h3>
+  <div class="row">
+    <div><label for="rw">壁紙の幅（cm）</label><input type="number" id="rw" value="92" min="30" step="1" inputmode="numeric"></div>
+    <div><label for="loss">ロス分（柄合わせ・切りしろ）</label><select id="loss"><option value="0.10" selected>無地：10%</option><option value="0.15">柄物：15%</option><option value="0.20">大柄・初心者：20%</option></select></div>
+  </div>
+  <h3 style="margin-top:18px">ペンキの設定</h3>
+  <div class="row">
+    <div><label for="cov">1Lあたりの塗り面積（m²/L・1回塗り）</label><input type="number" id="cov" value="8" min="1" step="0.5" inputmode="decimal"></div>
+    <div><label for="coats">塗り回数</label><select id="coats"><option value="1">1回</option><option value="2" selected>2回（標準）</option><option value="3">3回</option></select></div>
+  </div>
+  <button type="button" onclick="calc()">必要量を計算する</button>
+  <div class="result" id="out" hidden></div>
+</div>
+<script>
+function v(id){return parseFloat(document.getElementById(id).value)||0}
+function calc(){
+  var w=v('w'),d=v('d'),h=v('h');
+  if(!(w>0&&d>0&&h>0)){alert('部屋のサイズを入力してください');return;}
+  var perim=2*(w+d);
+  var openings=v('doors')*1.8+v('wins')*1.5;
+  var wall=Math.max(perim*h-openings,0);
+  var ceilArea=document.getElementById('ceil').value==='1'?w*d:0;
+  var area=wall+ceilArea;
+  // 壁紙: 幅から実効幅(重ね代2cm)を引いて必要枚数、1枚あたり高さ+10cm
+  var rw=v('rw')/100, eff=Math.max(rw-0.02,0.1);
+  var strips=Math.ceil(perim/eff);
+  var wallM=strips*(h+0.10);
+  if(ceilArea>0){var cs=Math.ceil(Math.min(w,d)/eff);wallM+=cs*(Math.max(w,d)+0.10);}
+  var loss=parseFloat(document.getElementById('loss').value);
+  var wallNeed=Math.ceil(wallM*(1+loss));
+  // 壁紙は開口部を差し引かない（丈方向に貼るため）。面積目安も表示
+  var cov=v('cov'),coats=parseInt(document.getElementById('coats').value);
+  var liters=area*coats/cov;
+  var litersNeed=Math.ceil(liters*1.1*10)/10;
+  var cans='';
+  var sizes=[4,2,1,0.7,0.2];var rem=litersNeed;var parts=[];
+  for(var i=0;i<sizes.length;i++){var n=Math.floor(rem/sizes[i]);if(n>0){parts.push(n+'缶×'+sizes[i]+'L');rem-=n*sizes[i];}}
+  if(rem>0.001)parts.push('＋小缶1つ');
+  cans=parts.join('、');
+  var html='<span>塗り・貼り面積（開口部を除く）</span><span class="big">約 '+area.toFixed(1)+' m²</span>'+
+  '<table><tr><th>壁の面積</th><td>約 '+wall.toFixed(1)+' m²（壁の周囲 '+perim.toFixed(1)+' m × 高さ '+h+' m − 開口部 '+openings.toFixed(1)+' m²）</td></tr>'+
+  (ceilArea>0?'<tr><th>天井の面積</th><td>約 '+ceilArea.toFixed(1)+' m²</td></tr>':'')+
+  '<tr><th>壁紙（幅'+v('rw')+'cm）</th><td><strong>約 '+wallNeed+' m</strong>（'+strips+'枚どり × '+(h+0.1).toFixed(2)+'m ＋ ロス'+Math.round(loss*100)+'%）</td></tr>'+
+  '<tr><th>ペンキ（'+coats+'回塗り）</th><td><strong>約 '+litersNeed+' L</strong>（正味 '+liters.toFixed(1)+'L ＋ 余裕10%）　缶の目安：'+cans+'</td></tr></table>'+
+  '<p class="note">壁紙は丈方向に1枚ずつ貼るため、窓・ドア部分も一度は通して計算しています（実際には切り抜いた分が端材になります）。</p>';
+  var out=document.getElementById('out');out.innerHTML=html;out.hidden=false;
+}
+document.querySelectorAll('#calc input,#calc select').forEach(function(el){el.addEventListener('change',calc)});
+calc();
+</script>
+
+<h2>壁紙の必要量の考え方</h2>
+<p>壁紙は「面積」ではなく「何枚どりできるか」で計算するのが実践的です。国産の壁紙は幅92cmが標準で、隣り合う壁紙を約2cm重ねて貼るため実効幅は約90cm。部屋の壁の周囲の長さ（縦＋横の2倍）を実効幅で割ると必要枚数が出ます。1枚の長さは天井高に上下の切りしろ10cmを足した長さです。窓やドアの部分も一度は同じ長さで計算しておくと、途中で足りなくなる事故を防げます。</p>
+<table class="ref">
+<tr><th>部屋の広さ（目安）</th><th>壁の周囲</th><th>壁紙の目安（天井高2.4m・無地）</th></tr>
+<tr><td>4.5畳（2.6m×2.6m）</td><td>約10.4m</td><td>約33m</td></tr>
+<tr><td>6畳（2.6m×3.5m）</td><td>約12.2m</td><td>約39m</td></tr>
+<tr><td>8畳（3.5m×3.5m）</td><td>約14.0m</td><td>約44m</td></tr>
+<tr><td>10畳（3.5m×4.4m）</td><td>約15.8m</td><td>約50m</td></tr>
+</table>
+
+<h2>ペンキの必要量の考え方</h2>
+<p>ペンキは面積で計算します。壁の面積（周囲×高さ）から窓・ドアの面積を引き、天井も塗るなら天井面積を足します。これに塗り回数を掛け、缶に書かれた「1Lあたりの塗り面積」で割ると必要なリットル数です。室内用の水性ペンキは1回塗りで6〜10m²/Lが一般的で、下地の色を隠すために二度塗りが基本。濃い色から白へ塗り替えるときは3回塗りや下塗り材（シーラー）が必要になることもあります。</p>
+
+<h2>買いすぎ・足りないを防ぐコツ</h2>
+<p>壁紙は同じ品番でも製造ロットが変わると色味が微妙に変わることがあるため、一度にまとめて買うのが鉄則です。無地なら10%、柄合わせが必要なら15〜20%の余裕をみてください。ペンキは余ってもタッチアップ（補修）に使えるので、計算値より1割多めに買うと安心です。</p>
