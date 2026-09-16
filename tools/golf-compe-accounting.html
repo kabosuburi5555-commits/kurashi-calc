@@ -1,0 +1,92 @@
+<!--meta {
+"title": "ゴルフコンペ会計・精算計算｜会費・賞品・パーティー費から収支と1人あたり負担を自動計算",
+"summary": "参加人数・会費・賞品代・パーティー費・その他経費を入れると、コンペの収支、余剰／不足、1人あたりの負担、ちょうどよい会費の額を計算。集金・精算メモのコピーにも対応。",
+"description": "ゴルフコンペ幹事向けの無料会計ツール。会費収入・協賛金・繰越金と、賞品代・パーティー費・会場費・雑費を入力すると、収支の過不足、1人あたりの実費、赤字にならない会費の目安を自動計算します。精算メモをコピーして参加者への報告にも使えます。",
+"category": "趣味・スポーツ",
+"order": 12,
+"faq": [
+["ゴルフコンペの会費の相場はいくらですか？", "プレー費を各自精算にする場合、会費は3,000〜5,000円（賞品＋パーティーなし）、パーティー込みで6,000〜10,000円が一般的です。会社の公式コンペでは補助が出ることもあり、その場合は個人負担2,000〜3,000円程度に抑えられます。"],
+["会費が余ったらどうすればいいですか？", "少額なら次回に繰り越すか、参加賞の上乗せや2次会補助に回します。金額が大きい場合は参加者に報告して返金するのが最も揉めません。いずれの場合も収支の内訳を簡単に共有しておくと信頼につながります。"],
+["プレー費は会費に含めるべきですか？", "各自がゴルフ場で精算するのが一般的で、幹事の立替リスクも減ります。ただし招待者や取引先を招く場合は、招待者分のプレー費を会費や会社負担に含めることがあるので、事前に取り扱いを決めて案内文に明記しておきましょう。"],
+["幹事の会計で領収書は必要ですか？", "会社の経費で処理する場合は必要です。賞品・パーティーの領収書は宛名を会社名にし、参加者へは会費の領収書を求められたら発行できるよう、簡単な様式を用意しておくと安心です。"]
+]
+} -->
+<div class="calc" id="calc">
+  <h3 style="margin:0 0 4px">収入</h3>
+  <div class="row">
+    <div><label for="n">参加人数</label><input type="number" id="n" value="20" min="1" max="200" inputmode="numeric"></div>
+    <div><label for="fee">会費（1人・円）</label><input type="number" id="fee" value="6000" min="0" step="500" inputmode="numeric"></div>
+  </div>
+  <div class="row">
+    <div><label for="sponsor">協賛金・会社補助（円）</label><input type="number" id="sponsor" value="0" min="0" step="1000" inputmode="numeric"></div>
+    <div><label for="carry">前回からの繰越金（円）</label><input type="number" id="carry" value="0" min="0" step="1000" inputmode="numeric"></div>
+  </div>
+  <h3 style="margin:16px 0 4px">支出</h3>
+  <div class="row">
+    <div><label for="prize">賞品代の合計（円）</label><input type="number" id="prize" value="60000" min="0" step="1000" inputmode="numeric"></div>
+    <div><label for="party">パーティー・食事代の合計（円）</label><input type="number" id="party" value="40000" min="0" step="1000" inputmode="numeric"></div>
+  </div>
+  <div class="row">
+    <div><label for="venue">会場費・機材・印刷など（円）</label><input type="number" id="venue" value="5000" min="0" step="500" inputmode="numeric"></div>
+    <div><label for="misc">雑費・釣り銭準備など（円）</label><input type="number" id="misc" value="3000" min="0" step="500" inputmode="numeric"></div>
+  </div>
+  <div class="row">
+    <div><label for="guest">会費免除の招待者数（人）</label><input type="number" id="guest" value="0" min="0" inputmode="numeric"></div>
+    <div><label for="guestfee">招待者のプレー費を負担する場合（1人・円）</label><input type="number" id="guestfee" value="0" min="0" step="1000" inputmode="numeric"></div>
+  </div>
+  <button type="button" onclick="calc()">収支を計算する</button>
+  <div class="result" id="out" hidden></div>
+</div>
+<script>
+function v(id){return parseFloat(document.getElementById(id).value)||0}
+function yen(x){var s=Math.round(Math.abs(x)).toLocaleString()+'円';return (x<0?'−':'')+s}
+function calc(){
+  var n=v('n'),fee=v('fee'),sponsor=v('sponsor'),carry=v('carry');
+  var prize=v('prize'),party=v('party'),venue=v('venue'),misc=v('misc'),guest=v('guest'),guestfee=v('guestfee');
+  if(!(n>0))return;
+  var payers=Math.max(n-guest,0);
+  var income=fee*payers+sponsor+carry;
+  var expense=prize+party+venue+misc+guest*guestfee;
+  var diff=income-expense;
+  var perHead=payers>0?expense/payers:0;
+  var needFee=payers>0?Math.ceil(Math.max(expense-sponsor-carry,0)/payers/500)*500:0;
+  var status=diff>=0?'余剰（黒字）':'不足（赤字）';
+  var html='<span>収支の結果</span><span class="big">'+status+' '+yen(Math.abs(diff))+'</span>'+
+  '<table><tr><th>収入合計</th><td>'+yen(income)+'（会費 '+yen(fee)+' × '+payers+'名'+(sponsor?' ＋ 協賛・補助 '+yen(sponsor):'')+(carry?' ＋ 繰越 '+yen(carry):'')+'）</td></tr>'+
+  '<tr><th>支出合計</th><td>'+yen(expense)+'（賞品 '+yen(prize)+' ／ パーティー '+yen(party)+' ／ 会場等 '+yen(venue)+' ／ 雑費 '+yen(misc)+(guest*guestfee?' ／ 招待者プレー費 '+yen(guest*guestfee):'')+'）</td></tr>'+
+  '<tr><th>1人あたりの実費</th><td>'+yen(perHead)+'（会費との差 '+yen(fee-perHead)+'）</td></tr>'+
+  '<tr><th>赤字にならない会費</th><td><strong>'+yen(needFee)+'</strong>（500円単位で切り上げ）'+(fee<needFee?'　← 現在の会費では不足します':'')+'</td></tr>'+
+  '<tr><th>支出の内訳</th><td>賞品 '+Math.round(prize/expense*100||0)+'%・パーティー '+Math.round(party/expense*100||0)+'%・その他 '+Math.round((venue+misc+guest*guestfee)/expense*100||0)+'%</td></tr></table>';
+  var advice='';
+  if(diff<0)advice='不足分は、賞品代を '+yen(prize+diff)+' 以内に抑える、会費を '+yen(needFee)+' にする、協賛を募る、のいずれかで解消できます。';
+  else if(diff>fee)advice='余剰が会費1人分を超えています。参加賞の上乗せ・2次会補助・次回繰越のいずれかを参加者に報告して決めると揉めません。';
+  else advice='ほぼ収支トントンです。当日の追加・キャンセルに備えて、余剰は予備費として持っておきましょう。';
+  html+='<p>'+advice+'</p>';
+  var text='【コンペ会計報告】\n参加 '+n+'名（うち会費免除 '+guest+'名）\n収入：会費 '+yen(fee)+'×'+payers+'名＝'+yen(fee*payers)+(sponsor?'、協賛・補助 '+yen(sponsor):'')+(carry?'、繰越 '+yen(carry):'')+'　合計 '+yen(income)+'\n支出：賞品 '+yen(prize)+'、パーティー '+yen(party)+'、会場等 '+yen(venue)+'、雑費 '+yen(misc)+(guest*guestfee?'、招待者プレー費 '+yen(guest*guestfee):'')+'　合計 '+yen(expense)+'\n差引：'+(diff>=0?'余剰 ':'不足 ')+yen(Math.abs(diff))+(diff>0?'（次回へ繰越）':'')+'\n';
+  html+='<button type="button" onclick="navigator.clipboard.writeText(document.getElementById(\'txt\').value).then(function(){alert(\'コピーしました\')})">会計報告メモをコピー</button><textarea id="txt" style="width:100%;height:110px;margin-top:8px;font-size:.85rem" readonly>'+text+'</textarea>';
+  var o=document.getElementById('out');o.innerHTML=html;o.hidden=false;
+}
+document.getElementById('calc').addEventListener('change',calc);document.getElementById('calc').addEventListener('input',calc);
+calc();
+</script>
+
+<div class="calc" style="border-color:var(--accent)">
+  <h3 style="margin:0 0 6px">集計・順位表・賞品リストまで1ファイルで</h3>
+  <p class="note" style="margin:0">新ペリア自動集計・順位表・組み合わせ表・当日進行表・賞品リスト（予算合計と1人あたり費用を自動計算）・案内文テンプレをまとめた <a href="../golf-kanji-set/">「ゴルフコンペ幹事おまかせセット」（Excel・500円）</a> をご用意しています。</p>
+</div>
+
+<h2>会費の決め方（逆算の手順）</h2>
+<p>会費は「支出の合計 ÷ 会費を払う人数」を 500 円単位で切り上げて決めるのが基本です。支出は、賞品代（参加賞を含む）、パーティー・食事代、会場費や印刷・機材などの実費、釣り銭や当日の雑費の 4 つに分けて見積もります。協賛金や会社補助、前回の繰越金があれば先に差し引きます。招待者の会費を免除する場合は「払う人数」から除き、招待者のプレー費を負担するならその分を支出に加えます。</p>
+<table class="ref">
+<tr><th>費目</th><th>1人あたりの目安</th><th>メモ</th></tr>
+<tr><td>賞品代（参加賞込み）</td><td>2,500〜4,500円</td><td>優勝〜飛び賞と参加賞。<a href="../golf-prize-budget/">賞品予算シミュレーター</a>で配分</td></tr>
+<tr><td>パーティー・食事代</td><td>0〜5,000円</td><td>ゴルフ場のレストラン利用か、別会場か</td></tr>
+<tr><td>会場費・印刷・機材</td><td>100〜500円</td><td>順位表の印刷、賞名ラベル、旗など</td></tr>
+<tr><td>雑費・釣り銭</td><td>100〜300円</td><td>当日の追加参加・キャンセルの緩衝</td></tr>
+</table>
+
+<h2>集金と精算で揉めないコツ</h2>
+<p>集金は受付時に現金または事前振込で行い、会費の領収書を求められることを想定して簡単な様式を用意しておきます。支出の領収書はすべて保管し、終了後に「収入・支出・差引」の 3 行で報告すると、余剰の扱い（繰越・返金・2次会補助）を決めやすくなります。会社の経費で処理する場合は、賞品・パーティーの領収書の宛名を会社名にし、参加費の扱い（福利厚生費・交際費など）は経理担当に確認してください。</p>
+
+<h2>このツールの計算方法</h2>
+<p>収入 ＝ 会費 × 会費を払う人数 ＋ 協賛・補助 ＋ 繰越金。支出 ＝ 賞品 ＋ パーティー ＋ 会場等 ＋ 雑費 ＋ 招待者のプレー費。差引がマイナスなら不足で、赤字にならない会費は（支出 − 協賛 − 繰越）÷ 払う人数を 500 円単位で切り上げた額です。金額はすべて税込で入力してください。</p>

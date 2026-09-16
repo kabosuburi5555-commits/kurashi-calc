@@ -1,0 +1,121 @@
+<!--meta {
+"title": "ゴルフコンペ賞品予算シミュレーター｜参加人数と会費から賞ごとの予算配分を自動計算",
+"summary": "参加人数・会費・パーティー費を入れると、優勝〜飛び賞・参加賞まで賞ごとの予算配分と価格帯の目安を自動で計算。予算オーバーの判定と配分メモのコピーにも対応。",
+"description": "ゴルフコンペ幹事向けの無料ツール。参加人数・会費・パーティー費・予備費から賞品に使える総額を出し、優勝・準優勝・3位・ベストグロス・ブービー・ニアピン・ドラコン・飛び賞・参加賞への配分と1本あたりの価格帯を自動計算します。配分メモのコピー対応。",
+"category": "趣味・スポーツ",
+"order": 11,
+"faq": [
+["ゴルフコンペの賞品予算は会費の何割くらいが目安ですか？", "会費からパーティー（懇親会）費を引いた残りの7〜9割を賞品に充て、1割程度を予備費（釣り銭・雑費・当日の追加）に残すのが一般的です。会費5,000円・パーティーなしなら、1人あたり3,500〜4,500円が賞品の原資になります。"],
+["優勝賞品はいくらくらいが相場ですか？", "賞品総額の20〜30%を優勝に充てるのが目安です。20名・賞品総額8万円なら優勝は1.5〜2.5万円程度。上位に集めすぎると参加賞が寂しくなるので、参加賞を先に確保してから上位を決めると全体のバランスが取れます。"],
+["飛び賞は何位に置くのが一般的ですか？", "5位・10位・15位…のように5刻み、または7位・11位などのラッキーセブン系が定番です。人数の4分の1程度の人に何かしらの賞が当たるように設計すると、順位に関係なく楽しんでもらえます。"],
+["ニアピン・ドラコンはいくつ設定しますか？", "ニアピンはパー3の全ホール（通常4つ）、ドラコンはパー5のうち2ホールに置くコンペが多いですが、賞品数を抑えたい場合はニアピン2・ドラコン2でも問題ありません。1本1,000〜2,000円程度の実用品（ボール・グローブ・タオル）が定番です。"]
+]
+} -->
+<div class="calc" id="calc">
+  <div class="row">
+    <div><label for="n">参加人数</label><input type="number" id="n" value="20" min="4" max="200" inputmode="numeric"></div>
+    <div><label for="fee">会費（1人・円）</label><input type="number" id="fee" value="5000" min="0" step="500" inputmode="numeric"></div>
+  </div>
+  <div class="row">
+    <div><label for="party">パーティー・食事代（1人・円／会費に含めないなら0）</label><input type="number" id="party" value="0" min="0" step="500" inputmode="numeric"></div>
+    <div><label for="reserve">予備費の割合</label><select id="reserve"><option value="0.05">5%</option><option value="0.1" selected>10%（標準）</option><option value="0.15">15%</option></select></div>
+  </div>
+  <div class="row">
+    <div><label for="extra">協賛品・協賛金（円・任意）</label><input type="number" id="extra" value="0" min="0" step="1000" inputmode="numeric"></div>
+    <div><label for="sanka">参加賞（1人・円／なしは0）</label><input type="number" id="sanka" value="500" min="0" step="100" inputmode="numeric"></div>
+  </div>
+  <label>設ける賞（チェック）</label>
+  <div class="radio">
+    <label><input type="checkbox" class="pz" data-k="win" checked> 優勝</label>
+    <label><input type="checkbox" class="pz" data-k="second" checked> 準優勝</label>
+    <label><input type="checkbox" class="pz" data-k="third" checked> 3位</label>
+    <label><input type="checkbox" class="pz" data-k="bg" checked> ベストグロス</label>
+    <label><input type="checkbox" class="pz" data-k="bb" checked> ブービー</label>
+    <label><input type="checkbox" class="pz" data-k="bm"> ブービーメーカー（最下位）</label>
+  </div>
+  <div class="row">
+    <div><label for="np">ニアピン賞の本数</label><select id="np"><option value="0">なし</option><option value="2" selected>2本</option><option value="4">4本（パー3全部）</option></select></div>
+    <div><label for="dc">ドラコン賞の本数</label><select id="dc"><option value="0">なし</option><option value="1">1本</option><option value="2" selected>2本</option></select></div>
+  </div>
+  <label for="tobi">飛び賞</label>
+  <select id="tobi"><option value="0">なし</option><option value="5" selected>5位・10位・15位…（5刻み）</option><option value="7">7位・11位・17位…（ラッキー系）</option><option value="10">10位・20位…（10刻み）</option></select>
+  <button type="button" onclick="calc()">予算配分を計算する</button>
+  <div class="result" id="out" hidden></div>
+</div>
+<script>
+function v(id){return parseFloat(document.getElementById(id).value)||0}
+function yen(x){return Math.round(x).toLocaleString()+'円'}
+function band(x){if(x>=20000)return '2万円以上：カタログギフト・高級肉・家電など';if(x>=10000)return '1〜2万円：カタログギフト・ブランド米・ゴルフ用品';if(x>=5000)return '5千〜1万円：グルメ・ボール1ダース・調理家電小物';if(x>=2000)return '2〜5千円：ボール半ダース・タオル・お菓子詰め合わせ';if(x>=1000)return '1〜2千円：ボール3個・グローブ・洗剤セット';return '〜1千円：タオル・ティー・ドリンク';}
+function calc(){
+  var n=v('n'),fee=v('fee'),party=v('party'),extra=v('extra'),sanka=v('sanka');
+  if(!(n>0))return;
+  var res=parseFloat(document.getElementById('reserve').value);
+  var income=fee*n+extra;
+  var partyTotal=party*n;
+  var afterParty=income-partyTotal;
+  var reserve=Math.round(afterParty*res);
+  var sankaTotal=sanka*n;
+  var prizePool=afterParty-reserve-sankaTotal;
+  var on={};document.querySelectorAll('.pz').forEach(function(c){on[c.dataset.k]=c.checked});
+  var np=+document.getElementById('np').value,dc=+document.getElementById('dc').value,tobiStep=+document.getElementById('tobi').value;
+  var tobiRanks=[];if(tobiStep>0){for(var r=tobiStep;r<n;r+=tobiStep){if(r>3)tobiRanks.push(r);}}
+  // 重み配分
+  var items=[];
+  if(on.win)items.push(['優勝','ネット1位',25]);
+  if(on.second)items.push(['準優勝','ネット2位',14]);
+  if(on.third)items.push(['3位','ネット3位',9]);
+  if(on.bg)items.push(['ベストグロス賞','グロス最少',8]);
+  if(on.bb)items.push(['ブービー賞','最下位から2番目',5]);
+  if(on.bm)items.push(['ブービーメーカー賞','最下位',3]);
+  for(var i=0;i<np;i++)items.push(['ニアピン賞'+(np>1?'（'+(i+1)+'）':''),'パー3',3]);
+  for(var j=0;j<dc;j++)items.push(['ドラコン賞'+(dc>1?'（'+(j+1)+'）':''),'パー5',3]);
+  tobiRanks.forEach(function(r){items.push(['飛び賞 '+r+'位','ネット'+r+'位',2.5]);});
+  var wsum=items.reduce(function(a,b){return a+b[2]},0)||1;
+  var rows='',text='【賞品予算配分】参加'+n+'名・会費'+yen(fee)+'\n';
+  var alloc=0;
+  items.forEach(function(it){var amt=Math.floor(prizePool*it[2]/wsum/100)*100;alloc+=amt;rows+='<tr><th>'+it[0]+'</th><td>'+it[1]+'</td><td><strong>'+yen(amt)+'</strong></td><td class="small">'+band(amt)+'</td></tr>';text+=it[0]+'（'+it[1]+'）：'+yen(amt)+'\n';});
+  if(sanka>0){rows+='<tr><th>参加賞</th><td>全員 '+n+'名</td><td><strong>'+yen(sanka)+' × '+n+' ＝ '+yen(sankaTotal)+'</strong></td><td class="small">'+band(sanka)+'</td></tr>';text+='参加賞：'+yen(sanka)+'×'+n+'名＝'+yen(sankaTotal)+'\n';}
+  var leftover=prizePool-alloc;
+  var over=prizePool<0;
+  var html='<span>賞品に使える総額（参加賞を除く）</span><span class="big">'+(over?'不足：':'')+yen(Math.abs(prizePool))+'</span>'+
+  '<table><tr><th>収入</th><td colspan="3">会費 '+yen(fee)+' × '+n+'名'+(extra?' ＋ 協賛 '+yen(extra):'')+' ＝ '+yen(income)+'</td></tr>'+
+  (partyTotal?'<tr><th>パーティー費</th><td colspan="3">− '+yen(partyTotal)+'（'+yen(party)+' × '+n+'）</td></tr>':'')+
+  '<tr><th>予備費（'+Math.round(res*100)+'%）</th><td colspan="3">− '+yen(reserve)+'</td></tr>'+
+  (sankaTotal?'<tr><th>参加賞</th><td colspan="3">− '+yen(sankaTotal)+'</td></tr>':'')+
+  '</table>';
+  if(over){html+='<p><strong>会費が不足しています。</strong>参加賞やパーティー費を下げるか、会費を '+yen(Math.ceil((partyTotal+sankaTotal)/(1-res)/n/500)*500)+' 以上にしてください。</p>';}
+  else{
+    html+='<table><tr><th>賞</th><th>対象</th><th>予算</th><th>価格帯の目安</th></tr>'+rows+'</table>';
+    html+='<p class="note">賞の本数 '+(items.length+(sanka>0?1:0))+'（参加者の約 '+Math.round((items.length)/n*100)+'% に上位賞・特別賞が当たる設計）。端数 '+yen(leftover)+' は予備費に加算してください。100円単位で切り捨てています。</p>';
+    html+='<button type="button" onclick="navigator.clipboard.writeText(document.getElementById(\'txt\').value).then(function(){alert(\'コピーしました\')})">配分メモをコピー</button><textarea id="txt" style="width:100%;height:100px;margin-top:8px;font-size:.85rem" readonly>'+text+'予備費：'+yen(reserve+leftover)+'</textarea>';
+  }
+  var o=document.getElementById('out');o.innerHTML=html;o.hidden=false;
+}
+document.getElementById('calc').addEventListener('change',calc);document.getElementById('calc').addEventListener('input',calc);
+calc();
+</script>
+
+<div class="calc" style="border-color:var(--accent)">
+  <h3 style="margin:0 0 6px">幹事の準備をまとめて済ませたい方へ</h3>
+  <p class="note" style="margin:0">新ペリア自動集計・順位表・組み合わせ表・当日進行表・賞品リスト・案内文テンプレが1ファイルになった <a href="../golf-kanji-set/">「ゴルフコンペ幹事おまかせセット」（Excel・500円）</a> をご用意しています。この計算結果をそのまま賞品リストに写せます。</p>
+</div>
+
+<h2>賞品予算の考え方</h2>
+<p>賞品予算は「会費 − パーティー費 − 予備費 − 参加賞」で決まります。順番が大切で、先に全員に行き渡る参加賞を確保し、残りを上位賞と特別賞に配分すると、順位に関係なく満足度が保てます。予備費は釣り銭・当日の追加参加・賞品の不足分に充てるため、1割程度残しておくと安心です。</p>
+<table class="ref">
+<tr><th>賞</th><th>賞品総額に対する目安</th><th>定番の賞品</th></tr>
+<tr><td>優勝</td><td>20〜30%</td><td>カタログギフト、高級肉、家電</td></tr>
+<tr><td>準優勝</td><td>12〜16%</td><td>グルメギフト、ゴルフ用品</td></tr>
+<tr><td>3位</td><td>8〜10%</td><td>ボール1ダース、お酒</td></tr>
+<tr><td>ベストグロス</td><td>6〜10%</td><td>ゴルフ用品</td></tr>
+<tr><td>ブービー</td><td>4〜6%</td><td>笑いの取れる実用品</td></tr>
+<tr><td>ニアピン・ドラコン</td><td>各2〜4%</td><td>ボール、グローブ、タオル</td></tr>
+<tr><td>飛び賞</td><td>各2〜3%</td><td>お菓子、日用品</td></tr>
+<tr><td>参加賞</td><td>1人300〜1,000円</td><td>ボール、タオル、ドリンク</td></tr>
+</table>
+
+<h2>人数別の予算感（会費5,000円・パーティーなし・参加賞500円の場合）</h2>
+<p>12名なら賞品総額は約4.8万円で、優勝1.2万円・準優勝7千円・3位4千円前後。20名なら約8万円で、優勝2万円・準優勝1.1万円が目安になります。40名を超えると飛び賞の本数を増やして「当たる人」を増やすほうが喜ばれます。協賛品（取引先からの寄贈など）がある場合は、協賛品を特別賞に回し、会費からの賞品予算を参加賞の充実に使うと全体が引き締まります。</p>
+
+<h2>賞品選びで失敗しないために</h2>
+<p>持ち帰りやすさは重要です。電車で来る参加者が多いなら、重い・大きい賞品は避けてカタログギフトや商品券系にします。優勝賞品だけ豪華にしすぎると2位以下との差が目立つため、上位3つはなだらかに、特別賞はユーモアのある実用品にするのが定番です。景品の購入は開催の2週間前までに済ませ、当日は賞ごとに袋分けして「賞名ラベル」を貼っておくと表彰式が滞りません。</p>
