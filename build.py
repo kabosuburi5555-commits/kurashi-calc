@@ -146,10 +146,11 @@ def index_page(all_tools):
     return layout(CONFIG["site_name"], CONFIG["tagline"], body, "index.html")
 
 
-def static_page(name, title, description):
+def static_page(name, title, description, hidden=False):
     src = open(os.path.join(PAGES_DIR, f"{name}.html"), encoding="utf-8").read()
     body = f'<nav class="breadcrumb"><a href="../">ホーム</a> › <span>{html.escape(title)}</span></nav><article class="page"><h1>{html.escape(title)}</h1>{src}</article>'
-    return layout(title, description, body, f"{name}/index.html")
+    extra = '<meta name="robots" content="noindex, nofollow">' if hidden else ""
+    return layout(title, description, body, f"{name}/index.html", extra_head=extra)
 
 
 def write(path, content):
@@ -164,8 +165,10 @@ def main():
     for t in tools:
         write(f"{t['slug']}/index.html", tool_page(t, tools))
     write("index.html", index_page(tools))
-    for name, title, desc in CONFIG["pages"]:
-        write(f"{name}/index.html", static_page(name, title, desc))
+    for page in CONFIG["pages"]:
+        name, title, desc = page[:3]
+        hidden = len(page) > 3 and bool(page[3].get("hidden"))
+        write(f"{name}/index.html", static_page(name, title, desc, hidden=hidden))
     # assets
     for asset in ("style.css", "favicon.svg"):
         write(asset, open(os.path.join(ROOT, asset), encoding="utf-8").read())
@@ -173,10 +176,16 @@ def main():
     static_dir = os.path.join(ROOT, "static")
     if os.path.isdir(static_dir):
         for f in os.listdir(static_dir):
-            write(f, open(os.path.join(static_dir, f), encoding="utf-8").read())
+            src = os.path.join(static_dir, f)
+            if not os.path.isfile(src):
+                continue
+            full = os.path.join(DIST, f)
+            os.makedirs(os.path.dirname(full), exist_ok=True)
+            with open(src, "rb") as fi, open(full, "wb") as fo:
+                fo.write(fi.read())
     base = CONFIG["base_url"].rstrip("/")
     today = datetime.date.today().isoformat()
-    urls = [f"{base}/"] + [f"{base}/{t['slug']}/" for t in tools] + [f"{base}/{p[0]}/" for p in CONFIG["pages"]]
+    urls = [f"{base}/"] + [f"{base}/{t['slug']}/" for t in tools] + [f"{base}/{p[0]}/" for p in CONFIG["pages"] if not (len(p) > 3 and p[3].get("hidden"))]
     sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     sm += "".join(f"  <url><loc>{u}</loc><lastmod>{today}</lastmod></url>\n" for u in urls) + "</urlset>\n"
     write("sitemap.xml", sm)

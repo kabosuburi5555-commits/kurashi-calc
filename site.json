@@ -22,7 +22,14 @@
       "golf-kanji-set",
       "ゴルフコンペ幹事おまかせセット（Excel）",
       "新ペリア自動集計・順位表・組み合わせ表・進行表・賞品リスト・案内文テンプレが1ファイルになった幹事向けExcelセット（500円）の紹介ページ"
+    ],
+    [
+      "kanji-tokuten-r7q3",
+      "読者特典：ゴルフコンペ幹事テンプレ集",
+      "『はじめてのゴルフコンペ幹事』読者向けの特典ダウンロードページ",
+      {
+        "hidden": true
+      }
     ]
-  ],
-  "head_extra": "<meta name=\"google-site-verification\" content=\"WNPqOZPnyyX02FcKzzTxbN6CJaJhOlcu7BKionr5XQo\" />"
+  ]
 }

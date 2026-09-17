@@ -40,3 +40,6 @@ h3{font-size:1rem;margin:0 0 .3em}
 article table.ref{width:100%;border-collapse:collapse;font-size:.92rem;margin:8px 0 16px}
 article table.ref th,article table.ref td{border:1px solid var(--border);padding:6px 8px;text-align:left}
 article table.ref th{background:var(--accent-2)}
+.cta{margin:20px 0}
+.btn{display:inline-block;font-weight:700;padding:12px 20px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none}
+.btn:hover{opacity:.9}
