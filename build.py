@@ -98,6 +98,22 @@ def layout(title, description, body, path, extra_head="", is_tool=False, meta=No
 </html>
 """
 
+AFF = {"a_id": "5805849", "p_id": "54", "pc_id": "54", "pl_id": "27059"}
+
+
+def aff_block(items):
+    """もしもアフィリエイト（楽天市場）のテキストリンク枠。items: [{"label":..., "q":...}]"""
+    import urllib.parse
+    q = f"a_id={AFF['a_id']}&p_id={AFF['p_id']}&pc_id={AFF['pc_id']}&pl_id={AFF['pl_id']}"
+    lis = ""
+    for it in items:
+        target = f"https://search.rakuten.co.jp/search/mall/{urllib.parse.quote(it['q'])}/"
+        href = f"https://af.moshimo.com/af/c/click?{q}&url={urllib.parse.quote(target, safe='')}"
+        lis += f'<li><a href="{href}" target="_blank" rel="nofollow sponsored noopener">{html.escape(it["label"])}</a><span class="small"> — 楽天市場で探す</span></li>'
+    img = f'<img src="https://i.moshimo.com/af/i/impression?{q}" width="1" height="1" alt="" style="border:0;">'
+    return (f'<aside class="aff"><p class="aff-label">PR　以下は楽天市場へのアフィリエイト広告リンクです。リンク経由で購入されると当サイトに紹介料が入ります（購入価格は変わりません）。</p>'
+            f'<ul>{lis}</ul>{img}</aside>')
+
 
 def tool_page(meta, all_tools):
     h1 = meta.get("h1") or meta["title"].split("｜")[0]
@@ -117,6 +133,7 @@ def tool_page(meta, all_tools):
 <p class="lead">{html.escape(meta["description"])}</p>
 {meta["body"]}
 {faq_html}
+{aff_block(meta["affiliate"]) if meta.get("affiliate") else ""}
 {rel_html}
 <p class="updated small">最終更新: {meta.get("updated", datetime.date.today().isoformat())}</p>
 </article>
