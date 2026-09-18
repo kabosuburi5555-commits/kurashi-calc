@@ -35,6 +35,10 @@ def layout(title, description, body, path, extra_head="", is_tool=False, meta=No
     canonical = f"{base}/{path}".replace("/index.html", "/")
     site = CONFIG["site_name"]
     full_title = f"{title}｜{site}" if title != site else site
+    og_slug = path.replace("/index.html", "").replace("index.html", "").split("/")[-1] or "index"
+    if not os.path.exists(os.path.join(ROOT, "static", "og", f"{og_slug}.png")):
+        og_slug = "index"
+    og_image = f"{base}/og/{og_slug}.png"
     jsonld = ""
     if is_tool and meta:
         data = {
@@ -74,7 +78,12 @@ def layout(title, description, body, path, extra_head="", is_tool=False, meta=No
 <meta property="og:type" content="website">
 <meta property="og:url" content="{canonical}">
 <meta property="og:site_name" content="{html.escape(site)}">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="{og_image}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{og_image}">
+<meta name="robots" content="max-image-preview:large">
 <link rel="icon" href="{rel}favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="{rel}style.css">
 {jsonld}
@@ -192,14 +201,14 @@ def main():
     # static/ 以下はそのままサイト直下へ（Google 所有権確認ファイルなど）
     static_dir = os.path.join(ROOT, "static")
     if os.path.isdir(static_dir):
-        for f in os.listdir(static_dir):
-            src = os.path.join(static_dir, f)
-            if not os.path.isfile(src):
-                continue
-            full = os.path.join(DIST, f)
-            os.makedirs(os.path.dirname(full), exist_ok=True)
-            with open(src, "rb") as fi, open(full, "wb") as fo:
-                fo.write(fi.read())
+        for dirpath, _, files in os.walk(static_dir):
+            for f in files:
+                src = os.path.join(dirpath, f)
+                relp = os.path.relpath(src, static_dir)
+                full = os.path.join(DIST, relp)
+                os.makedirs(os.path.dirname(full), exist_ok=True)
+                with open(src, "rb") as fi, open(full, "wb") as fo:
+                    fo.write(fi.read())
     base = CONFIG["base_url"].rstrip("/")
     today = datetime.date.today().isoformat()
     urls = [f"{base}/"] + [f"{base}/{t['slug']}/" for t in tools] + [f"{base}/{p[0]}/" for p in CONFIG["pages"] if not (len(p) > 3 and p[3].get("hidden"))]
