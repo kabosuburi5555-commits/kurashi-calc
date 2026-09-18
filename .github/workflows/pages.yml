@@ -29,6 +29,12 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
