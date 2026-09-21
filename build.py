@@ -110,17 +110,31 @@ def layout(title, description, body, path, extra_head="", is_tool=False, meta=No
 AFF = {"a_id": "5805849", "p_id": "54", "pc_id": "54", "pl_id": "27059"}
 
 
+# Amazon（もしも経由）。承認後に p_id / pc_id / pl_id を設定すると各行に Amazon リンクが並ぶ。未設定なら楽天のみ。
+AFF_AMAZON = {"a_id": "5805849", "p_id": "", "pc_id": "", "pl_id": ""}
+
+
 def aff_block(items):
-    """もしもアフィリエイト（楽天市場）のテキストリンク枠。items: [{"label":..., "q":...}]"""
+    """もしもアフィリエイト（楽天市場／Amazon）のテキストリンク枠。items: [{"label":..., "q":...}]"""
     import urllib.parse
     q = f"a_id={AFF['a_id']}&p_id={AFF['p_id']}&pc_id={AFF['pc_id']}&pl_id={AFF['pl_id']}"
+    amz_on = bool(AFF_AMAZON.get("p_id"))
+    qa = f"a_id={AFF_AMAZON['a_id']}&p_id={AFF_AMAZON['p_id']}&pc_id={AFF_AMAZON['pc_id']}&pl_id={AFF_AMAZON['pl_id']}" if amz_on else ""
     lis = ""
     for it in items:
         target = f"https://search.rakuten.co.jp/search/mall/{urllib.parse.quote(it['q'])}/"
         href = f"https://af.moshimo.com/af/c/click?{q}&url={urllib.parse.quote(target, safe='')}"
-        lis += f'<li><a href="{href}" target="_blank" rel="nofollow sponsored noopener">{html.escape(it["label"])}</a><span class="small"> — 楽天市場で探す</span></li>'
+        row = f'<a href="{href}" target="_blank" rel="nofollow sponsored noopener">{html.escape(it["label"])}</a><span class="small"> — 楽天市場で探す</span>'
+        if amz_on:
+            t2 = f"https://www.amazon.co.jp/s?k={urllib.parse.quote(it['q'])}"
+            h2 = f"https://af.moshimo.com/af/c/click?{qa}&url={urllib.parse.quote(t2, safe='')}"
+            row += f'<span class="small"> ／ <a href="{h2}" target="_blank" rel="nofollow sponsored noopener">Amazon で探す</a></span>'
+        lis += f"<li>{row}</li>"
     img = f'<img src="https://i.moshimo.com/af/i/impression?{q}" width="1" height="1" alt="" style="border:0;">'
-    return (f'<aside class="aff"><p class="aff-label">PR　以下は楽天市場へのアフィリエイト広告リンクです。リンク経由で購入されると当サイトに紹介料が入ります（購入価格は変わりません）。</p>'
+    if amz_on:
+        img += f'<img src="https://i.moshimo.com/af/i/impression?{qa}" width="1" height="1" alt="" style="border:0;">'
+    shops = "楽天市場・Amazon" if amz_on else "楽天市場"
+    return (f'<aside class="aff"><p class="aff-label">PR　以下は{shops}へのアフィリエイト広告リンクです。リンク経由で購入されると当サイトに紹介料が入ります（購入価格は変わりません）。</p>'
             f'<ul>{lis}</ul>{img}</aside>')
 
 
