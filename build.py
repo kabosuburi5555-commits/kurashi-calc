@@ -164,6 +164,15 @@ def tool_page(meta, all_tools):
     return layout(meta["title"], meta["description"], body, f"{meta['slug']}/index.html", is_tool=True, meta=meta)
 
 
+CAT_DESC = {
+    "料理・キッチン": "「2合の水は何ml？」「大さじ1は何グラム？」「この肉、何時に冷蔵庫へ移せば夕方に解凍できる？」といった台所の小さな疑問を、その場で数字にします。レシピ本や炊飯器の目盛りに頼れない場面（鍋炊き・無洗米・玄米、分量の倍量や半量、まとめ買いの冷凍保存）で役立ちます。",
+    "DIY・住まい": "壁紙やペンキの必要量、引越しのダンボール枚数とトラックのサイズなど、買う前・頼む前に「どのくらい要るか」を見積もるための計算です。買いすぎ・足りないを防ぎ、見積もりの妥当性を自分で確かめられます。",
+    "趣味・スポーツ": "ゴルフコンペの幹事向けに、新ペリア（ダブルペリア）方式のハンディ計算、参加者全員の順位表作成、賞品の予算配分、会費の収支・精算をそろえました。幹事を初めて任された方が、当日の集計と表彰式を滞りなく進めるための道具です。",
+    "ペット・動物": "犬（小型・中型・大型）と猫の年齢を人間に換算し、成長期・成犬期・シニア期の目安を表示します。フードの切り替え時期や健康診断の頻度を考えるきっかけにお使いください。",
+    "日付・時間": "記念日や締切まであと何日か、2 つの日付の間の日数、○日後の日付、赤ちゃんの生後日数とお祝い行事（お七夜・お宮参り・お食い初め・ハーフバースデー・初節句）の日付を計算します。",
+}
+
+
 def index_page(all_tools):
     cats = {}
     for t in all_tools:
@@ -174,7 +183,20 @@ def index_page(all_tools):
             f'<a class="card" href="{t["slug"]}/"><h3>{html.escape(t.get("h1") or t["title"].split("｜")[0])}</h3><p>{html.escape(t["summary"])}</p></a>'
             for t in tools
         )
-        sections += f'<section class="cat"><h2>{html.escape(cat)}</h2><div class="grid">{cards}</div></section>'
+        desc = CAT_DESC.get(cat, "")
+        desc_html = f'<p class="cat-desc">{html.escape(desc)}</p>' if desc else ""
+        sections += f'<section class="cat"><h2>{html.escape(cat)}</h2>{desc_html}<div class="grid">{cards}</div></section>'
+    n = len(all_tools)
+    intro = f"""
+<section class="intro">
+<h2>くらしの計算箱とは</h2>
+<p>くらしの計算箱は、料理・DIY・ペット・日付・ゴルフといった暮らしと趣味の場面で「ちょっと計算したい」ときに、検索してすぐ答えが出ることを目指した無料の計算ツール集です。現在 {n} 本のツールを公開しています。会員登録やアプリのインストールは不要で、スマートフォンのブラウザからそのまま使えます。</p>
+<p>入力した数値はお使いの端末（ブラウザ）の中だけで計算され、サーバーには送信されません。広告や外部サービスへの送信もありません（一部のページには、関連商品を楽天市場で探すためのアフィリエイトリンクを「PR」表示つきで置いています）。</p>
+<h2>使い方</h2>
+<p>下のカテゴリから目的のツールを選び、いくつかの数値を入れるか選択肢を選ぶだけです。結果はその場で更新されます。各ツールのページには、計算の考え方（なぜその数値になるのか）、早見表、よくある質問も載せていますので、結果の根拠を確認したいときや、ツールを使わずに暗算したいときにもお役立てください。</p>
+<p>計算結果はあくまで一般的な目安です。炊飯器の目盛り、ゴルフ場や主催者の取り決め、メーカーの施工基準、獣医師の指示など、個別の基準がある場合はそちらを優先してください。</p>
+</section>
+"""
     body = f"""
 <section class="hero">
 <h1>{html.escape(CONFIG["site_name"])}</h1>
@@ -182,6 +204,11 @@ def index_page(all_tools):
 <p class="small">登録不要・無料・入力内容はブラウザ内でのみ計算され、送信されません。</p>
 </section>
 <div id="tools">{sections}</div>
+{intro}
+<section class="intro">
+<h2>運営について</h2>
+<p>個人が運営しています。計算式の出典や運営方針は<a href="about/">このサイトについて</a>に、個人情報の扱いは<a href="privacy/">プライバシーポリシー</a>にまとめています。計算の誤りや追加してほしいツールがあれば<a href="contact/">お問い合わせ</a>からお知らせください。ゴルフコンペの幹事向けには、Excel の<a href="golf-kanji-set/">幹事おまかせセット</a>と Kindle 本『はじめてのゴルフコンペ幹事』もご用意しています。</p>
+</section>
 """
     return layout(CONFIG["site_name"], CONFIG["tagline"], body, "index.html")
 

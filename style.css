@@ -48,3 +48,8 @@ article table.ref th{background:var(--accent-2)}
 .aff-label{font-size:.85rem;color:#556;margin:0 0 8px}
 .aff ul{margin:0;padding-left:1.2em}
 .aff li{margin:4px 0}
+
+.cat-desc{color:var(--muted);font-size:.95rem;margin:0 0 12px;line-height:1.7}
+.intro{margin:28px 0 8px}
+.intro h2{font-size:1.15rem;margin:18px 0 8px}
+.intro p{line-height:1.8;margin:0 0 10px}
